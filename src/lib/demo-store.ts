@@ -10,6 +10,7 @@ import type {
 } from "@/types/inventory";
 import { MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
+import { BUILTIN_ROLES, type RoleDefinition, type PermissionAction } from "@/lib/roles";
 
 export interface ItemFilters {
   categoryId?: string;
@@ -30,7 +31,8 @@ export interface DemoUser {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "manager" | "requestor";
+  /** Matches a RoleDefinition.id (built-in or custom). */
+  role: string;
   status: "active" | "inactive" | "pending";
   joinedAt: string;
 }
@@ -47,6 +49,7 @@ export class DemoStore {
   private data: SeedData;
   private version = 0;
   private users: DemoUser[] = SEED_USERS.map((u) => ({ ...u }));
+  private roles: RoleDefinition[] = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
 
   constructor() {
     this.data = generateSeedData();
@@ -59,7 +62,69 @@ export class DemoStore {
   reset() {
     this.data = generateSeedData();
     this.users = SEED_USERS.map((u) => ({ ...u }));
+    this.roles = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
     this.version++;
+  }
+
+  // ─── Roles ─────────────────────────────────────────────
+  getRoles(): RoleDefinition[] {
+    return this.roles.map((r) => ({ ...r, permissions: [...r.permissions] }));
+  }
+
+  getRoleById(id: string): RoleDefinition | undefined {
+    const r = this.roles.find((x) => x.id === id);
+    return r ? { ...r, permissions: [...r.permissions] } : undefined;
+  }
+
+  createRole(role: Omit<RoleDefinition, "isSystem">): RoleDefinition | { error: string } {
+    if (!role.name.trim()) return { error: "Name is required" };
+    if (this.roles.some((r) => r.id === role.id)) return { error: "Role id already exists" };
+    if (this.roles.some((r) => r.name.toLowerCase() === role.name.trim().toLowerCase()))
+      return { error: "A role with this name already exists" };
+    const created: RoleDefinition = { ...role, name: role.name.trim(), isSystem: false, permissions: [...role.permissions] };
+    this.roles.push(created);
+    this.version++;
+    return created;
+  }
+
+  updateRole(id: string, updates: Partial<Pick<RoleDefinition, "name" | "description" | "color" | "permissions">>): RoleDefinition | { error: string } {
+    const idx = this.roles.findIndex((r) => r.id === id);
+    if (idx === -1) return { error: "Role not found" };
+    const current = this.roles[idx];
+    if (updates.name !== undefined) {
+      const name = updates.name.trim();
+      if (!name) return { error: "Name is required" };
+      if (this.roles.some((r) => r.id !== id && r.name.toLowerCase() === name.toLowerCase()))
+        return { error: "A role with this name already exists" };
+    }
+    // System role permissions may be edited but keep at least one perm on admin.
+    if (current.id === "admin" && updates.permissions && updates.permissions.length === 0) {
+      return { error: "Admin must retain at least one permission" };
+    }
+    this.roles[idx] = {
+      ...current,
+      ...updates,
+      name: updates.name?.trim() ?? current.name,
+      permissions: updates.permissions ? [...updates.permissions] : current.permissions,
+    };
+    this.version++;
+    return this.roles[idx];
+  }
+
+  deleteRole(id: string): { ok: true } | { error: string } {
+    const role = this.roles.find((r) => r.id === id);
+    if (!role) return { error: "Role not found" };
+    if (role.isSystem) return { error: "System roles cannot be deleted" };
+    const inUse = this.users.filter((u) => u.role === id).length;
+    if (inUse > 0) return { error: `Cannot delete — ${inUse} user${inUse === 1 ? "" : "s"} still assigned` };
+    this.roles = this.roles.filter((r) => r.id !== id);
+    this.version++;
+    return { ok: true };
+  }
+
+  hasPermission(roleId: string, permission: PermissionAction): boolean {
+    const role = this.roles.find((r) => r.id === roleId);
+    return role?.permissions.includes(permission) ?? false;
   }
 
   // ─── Users ─────────────────────────────────────────────
