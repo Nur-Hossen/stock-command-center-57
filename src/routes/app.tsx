@@ -19,7 +19,7 @@ export const Route = createFileRoute("/app")({
 
 function AppLayout() {
   const { isDemo } = useDemo();
-  const { role } = useRole();
+  const { hasPermission } = useRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -29,11 +29,11 @@ function AppLayout() {
 
   // Role-based route guard
   useEffect(() => {
-    if (isDemo && !canAccessRoute(location.pathname, role)) {
+    if (isDemo && !canAccessRoute(location.pathname, hasPermission)) {
       toast.error("You don't have permission to access that page.");
       navigate({ to: "/app/dashboard" });
     }
-  }, [location.pathname, role, navigate, isDemo]);
+  }, [location.pathname, hasPermission, navigate, isDemo]);
 
   // Demo guard — redirect to landing if not in demo
   useEffect(() => {
