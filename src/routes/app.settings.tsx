@@ -10,6 +10,7 @@ import { LocationSettings } from "@/components/settings/LocationSettings";
 import { ReorderDefaults } from "@/components/settings/ReorderDefaults";
 import { SystemSettings } from "@/components/settings/SystemSettings";
 import { UserManagement } from "@/components/settings/UserManagement";
+import { RoleManager } from "@/components/settings/RoleManager";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
@@ -43,6 +44,7 @@ function SettingsPage() {
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="reorder-defaults">Reorder Defaults</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
 
@@ -61,6 +63,9 @@ function SettingsPage() {
           </TabsContent>
           <TabsContent value="users">
             <ErrorBoundary><UserManagement /></ErrorBoundary>
+          </TabsContent>
+          <TabsContent value="roles">
+            <ErrorBoundary><RoleManager /></ErrorBoundary>
           </TabsContent>
           <TabsContent value="system">
             <ErrorBoundary><SystemSettings /></ErrorBoundary>

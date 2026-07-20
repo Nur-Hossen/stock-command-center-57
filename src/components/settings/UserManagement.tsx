@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Plus, MoreHorizontal, Users, Search, ShieldCheck, Shield, User } from "lucide-react";
+import { Plus, MoreHorizontal, Users, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useDemo } from "@/hooks/useDemo";
 import { Button } from "@/components/ui/button";
@@ -16,24 +16,24 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { DemoUser } from "@/lib/demo-store";
+import type { RoleDefinition } from "@/lib/roles";
 
-type RoleType = DemoUser["role"];
-const ROLE_LABELS: Record<RoleType, string> = { admin: "Admin", manager: "Inventory Manager", requestor: "Requestor" };
-const ROLE_COLORS: Record<RoleType, string> = { admin: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200", manager: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200", requestor: "bg-muted text-muted-foreground" };
 const CURRENT_USER_ID = "user-01"; // Alice is the logged-in admin in demo
 
 export function UserManagement() {
   const { demoStore, bumpVersion, version } = useDemo();
   const users = useMemo(() => demoStore?.getUsers() ?? [], [demoStore, version]);
+  const roles = useMemo<RoleDefinition[]>(() => demoStore?.getRoles() ?? [], [demoStore, version]);
+  const roleById = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles]);
 
   const [search, setSearch] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<RoleType>("requestor");
+  const [inviteRole, setInviteRole] = useState<string>("requestor");
   const [inviteError, setInviteError] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  const [roleChange, setRoleChange] = useState<{ user: DemoUser; newRole: RoleType } | null>(null);
+  const [roleChange, setRoleChange] = useState<{ user: DemoUser; newRole: string } | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<DemoUser | null>(null);
 
   const filtered = useMemo(() => {
@@ -43,10 +43,11 @@ export function UserManagement() {
   }, [users, search]);
 
   const adminCount = users.filter((u) => u.role === "admin" && u.status === "active").length;
-
   const isLastAdmin = (user: DemoUser) => user.role === "admin" && user.status === "active" && adminCount <= 1;
 
-  // ─── Invite ───────────────────────────────────────────
+  const roleLabel = (id: string) => roleById.get(id)?.name ?? id;
+  const roleColor = (id: string) => roleById.get(id)?.color ?? "bg-muted text-muted-foreground";
+
   const handleInvite = () => {
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setInviteError("Valid email required"); return; }
@@ -60,16 +61,14 @@ export function UserManagement() {
     }, 400);
   };
 
-  // ─── Role change ──────────────────────────────────────
   const confirmRoleChange = () => {
     if (!roleChange || !demoStore) return;
     demoStore.updateUser(roleChange.user.id, { role: roleChange.newRole });
     bumpVersion();
-    toast.success(`${roleChange.user.name}'s role changed to ${ROLE_LABELS[roleChange.newRole]}`);
+    toast.success(`${roleChange.user.name}'s role changed to ${roleLabel(roleChange.newRole)}`);
     setRoleChange(null);
   };
 
-  // ─── Deactivate / Reactivate ──────────────────────────
   const confirmDeactivate = () => {
     if (!deactivateTarget || !demoStore) return;
     demoStore.updateUser(deactivateTarget.id, { status: "inactive" });
@@ -121,7 +120,7 @@ export function UserManagement() {
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
                 <TableCell>
-                  <RoleDropdown user={user} currentUserId={CURRENT_USER_ID} adminCount={adminCount} isLastAdmin={isLastAdmin(user)}
+                  <RoleDropdown user={user} roles={roles} currentUserId={CURRENT_USER_ID} isLastAdmin={isLastAdmin(user)}
                     onChangeRole={(newRole) => setRoleChange({ user, newRole })} />
                 </TableCell>
                 <TableCell>
@@ -152,7 +151,7 @@ export function UserManagement() {
             </div>
             <p className="text-xs text-muted-foreground">{user.email}</p>
             <div className="flex items-center gap-2">
-              <Badge className={cn("text-xs", ROLE_COLORS[user.role])}>{ROLE_LABELS[user.role]}</Badge>
+              <Badge className={cn("text-xs", roleColor(user.role))}>{roleLabel(user.role)}</Badge>
               <Badge variant={user.status === "active" ? "default" : "secondary"} className="text-xs">{user.status}</Badge>
             </div>
           </div>
@@ -174,12 +173,12 @@ export function UserManagement() {
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as RoleType)}>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Inventory Manager</SelectItem>
-                  <SelectItem value="requestor">Requestor</SelectItem>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -197,7 +196,7 @@ export function UserManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle>Change role?</AlertDialogTitle>
             <AlertDialogDescription>
-              Change {roleChange?.user.name}'s role from <strong>{roleChange ? ROLE_LABELS[roleChange.user.role] : ""}</strong> to <strong>{roleChange ? ROLE_LABELS[roleChange.newRole] : ""}</strong>?
+              Change {roleChange?.user.name}'s role from <strong>{roleChange ? roleLabel(roleChange.user.role) : ""}</strong> to <strong>{roleChange ? roleLabel(roleChange.newRole) : ""}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -224,19 +223,21 @@ export function UserManagement() {
   );
 }
 
-// ─── Role Dropdown ──────────────────────────────────────
-function RoleDropdown({ user, currentUserId, adminCount, isLastAdmin, onChangeRole }: {
-  user: DemoUser; currentUserId: string; adminCount: number; isLastAdmin: boolean;
-  onChangeRole: (role: RoleType) => void;
+function RoleDropdown({ user, roles, currentUserId, isLastAdmin, onChangeRole }: {
+  user: DemoUser; roles: RoleDefinition[]; currentUserId: string; isLastAdmin: boolean;
+  onChangeRole: (role: string) => void;
 }) {
   const isSelf = user.id === currentUserId;
+  const currentRole = roles.find((r) => r.id === user.role);
+  const badgeClass = currentRole?.color ?? "bg-muted text-muted-foreground";
+  const label = currentRole?.name ?? user.role;
 
   if (isSelf) {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge className={cn("text-xs cursor-default", ROLE_COLORS[user.role])}>{ROLE_LABELS[user.role]}</Badge>
+            <Badge className={cn("text-xs cursor-default", badgeClass)}>{label}</Badge>
           </TooltipTrigger>
           <TooltipContent>Cannot change your own role</TooltipContent>
         </Tooltip>
@@ -249,7 +250,7 @@ function RoleDropdown({ user, currentUserId, adminCount, isLastAdmin, onChangeRo
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge className={cn("text-xs cursor-default", ROLE_COLORS[user.role])}>{ROLE_LABELS[user.role]}</Badge>
+            <Badge className={cn("text-xs cursor-default", badgeClass)}>{label}</Badge>
           </TooltipTrigger>
           <TooltipContent>Cannot change role — this is the only admin. Promote another user first.</TooltipContent>
         </Tooltip>
@@ -258,26 +259,19 @@ function RoleDropdown({ user, currentUserId, adminCount, isLastAdmin, onChangeRo
   }
 
   return (
-    <Select value={user.role} onValueChange={(v) => { if (v !== user.role) onChangeRole(v as RoleType); }}>
-      <SelectTrigger className="h-7 w-[160px] text-xs">
+    <Select value={user.role} onValueChange={(v) => { if (v !== user.role) onChangeRole(v); }}>
+      <SelectTrigger className="h-7 w-[180px] text-xs">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="admin">
-          <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" />Admin</div>
-        </SelectItem>
-        <SelectItem value="manager">
-          <div className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5" />Inventory Manager</div>
-        </SelectItem>
-        <SelectItem value="requestor">
-          <div className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" />Requestor</div>
-        </SelectItem>
+        {roles.map((r) => (
+          <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
 }
 
-// ─── User Actions ───────────────────────────────────────
 function UserActions({ user, currentUserId, isLastAdmin, onDeactivate, onReactivate }: {
   user: DemoUser; currentUserId: string; isLastAdmin: boolean;
   onDeactivate: () => void; onReactivate: () => void;

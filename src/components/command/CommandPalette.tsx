@@ -45,7 +45,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { data: items } = useItems();
   const { can } = usePermissions();
-  const { role } = useRole();
+  const { hasPermission } = useRole();
   const { demoStore } = useDemo();
 
   // Reset query on close
@@ -123,10 +123,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   // Filter pages by query + role
   const matchedPages = useMemo(() => {
-    const accessible = PAGES.filter((p) => canAccessRoute(p.path, role));
+    const accessible = PAGES.filter((p) => canAccessRoute(p.path, hasPermission));
     if (!q) return accessible;
     return accessible.filter((p) => p.label.toLowerCase().includes(q));
-  }, [q, role]);
+  }, [q, hasPermission]);
 
   // Filter actions by query + permissions
   const matchedActions = useMemo(() => {
