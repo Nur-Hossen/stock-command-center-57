@@ -10,6 +10,7 @@ import { LocationSettings } from "@/components/settings/LocationSettings";
 import { ReorderDefaults } from "@/components/settings/ReorderDefaults";
 import { SystemSettings } from "@/components/settings/SystemSettings";
 import { UserManagement } from "@/components/settings/UserManagement";
+import { RoleManager } from "@/components/settings/RoleManager";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
