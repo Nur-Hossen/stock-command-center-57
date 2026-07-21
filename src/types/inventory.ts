@@ -63,6 +63,9 @@ export interface Item {
   name: string;
   description: string;
   categoryId: string | null;
+  brandId: string | null;
+  model: string;
+  modelYear: number | null;
   status: ItemStatus;
   unit: string;
   currentStock: number;
@@ -73,7 +76,83 @@ export interface Item {
   locationId: string | null;
   supplierId: string | null;
   imageUrl: string | null;
+  trackSerials: boolean;
+  defaultWarrantyMonths: number;
   customFields: Record<string, string | number | boolean>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  logoUrl: string;
+  website: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ItemUnitStatus =
+  | "in_stock"
+  | "reserved"
+  | "sold"
+  | "returned"
+  | "warranty_service"
+  | "retired";
+
+export interface ItemUnit {
+  id: string;
+  itemId: string;
+  serialNumber: string;
+  status: ItemUnitStatus;
+  locationId: string | null;
+  receivedAt: string;
+  soldAt: string | null;
+  warrantyMonths: number;
+  /** ISO date; null when not yet sold */
+  warrantyExpiresAt: string | null;
+  cost: number;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SaleStatus = "draft" | "completed" | "refunded";
+
+export interface SaleLineItem {
+  id: string;
+  itemUnitId: string;
+  itemId: string;
+  serialNumber: string;
+  unitPrice: number;
+  warrantyMonths: number;
+}
+
+export interface Sale {
+  id: string;
+  saleNumber: string;
+  customerId: string;
+  status: SaleStatus;
+  items: SaleLineItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  soldAt: string;
+  soldBy: string;
+  notes: string;
   createdAt: string;
   updatedAt: string;
 }
