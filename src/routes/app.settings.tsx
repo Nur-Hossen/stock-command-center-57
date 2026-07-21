@@ -11,6 +11,7 @@ import { ReorderDefaults } from "@/components/settings/ReorderDefaults";
 import { SystemSettings } from "@/components/settings/SystemSettings";
 import { UserManagement } from "@/components/settings/UserManagement";
 import { RoleManager } from "@/components/settings/RoleManager";
+import { BrandManager } from "@/components/settings/BrandManager";
 
 export const Route = createFileRoute("/app/settings")({
   component: SettingsPage,
