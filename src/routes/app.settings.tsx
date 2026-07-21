@@ -41,6 +41,7 @@ function SettingsPage() {
       <Tabs defaultValue="categories" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="locations">Locations</TabsTrigger>
           <TabsTrigger value="reorder-defaults">Reorder Defaults</TabsTrigger>
@@ -52,6 +53,9 @@ function SettingsPage() {
         <div className="mt-6">
           <TabsContent value="categories">
             <ErrorBoundary><CategoryManager /></ErrorBoundary>
+          </TabsContent>
+          <TabsContent value="brands">
+            <ErrorBoundary><BrandManager /></ErrorBoundary>
           </TabsContent>
           <TabsContent value="custom-fields">
             <ErrorBoundary><CustomFieldManager /></ErrorBoundary>
