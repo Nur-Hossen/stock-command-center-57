@@ -53,6 +53,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Sales",
+    items: [
+      { label: "Customers", href: "/app/customers", icon: UsersIcon },
+      { label: "Sales", href: "/app/sales", icon: Receipt },
+    ],
+  },
+  {
     label: "Intelligence",
     permKey: "canViewAnalytics",
     items: [
