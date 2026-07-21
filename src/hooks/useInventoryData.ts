@@ -96,3 +96,35 @@ export function useRequests(): QueryResult<InventoryRequest[]> {
     return { data: [] as InventoryRequest[], isLoading: false, error: null };
   }, [isDemo, demoStore, version]);
 }
+
+export function useBrands(): QueryResult<Brand[]> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getBrands(), isLoading: false, error: null };
+    return { data: [] as Brand[], isLoading: false, error: null };
+  }, [isDemo, demoStore, version]);
+}
+
+export function useUnits(filters?: { itemId?: string }): QueryResult<ItemUnit[]> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getUnits(filters), isLoading: false, error: null };
+    return { data: [] as ItemUnit[], isLoading: false, error: null };
+  }, [isDemo, demoStore, version, filters?.itemId]);
+}
+
+export function useCustomers(): QueryResult<Customer[]> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getCustomers(), isLoading: false, error: null };
+    return { data: [] as Customer[], isLoading: false, error: null };
+  }, [isDemo, demoStore, version]);
+}
+
+export function useSales(): QueryResult<Sale[]> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getSales(), isLoading: false, error: null };
+    return { data: [] as Sale[], isLoading: false, error: null };
+  }, [isDemo, demoStore, version]);
+}
