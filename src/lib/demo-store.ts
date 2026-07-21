@@ -51,6 +51,32 @@ const SEED_USERS: DemoUser[] = [
   { id: "user-05", name: "Eva Novak", email: "eva@stackwise.io", role: "requestor", status: "active", joinedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
 ];
 
+function seedBrands(): Brand[] {
+  const now = new Date().toISOString();
+  const mk = (id: string, name: string, description: string): Brand => ({
+    id, name, description, logoUrl: "", website: "", isActive: true, createdAt: now, updatedAt: now,
+  });
+  return [
+    mk("brand-samsung", "Samsung", "Consumer electronics — phones, audio, displays."),
+    mk("brand-apple", "Apple", "Consumer electronics — Mac, iPhone, iPad, accessories."),
+    mk("brand-sony", "Sony", "Consumer electronics — audio, imaging."),
+    mk("brand-logitech", "Logitech", "Peripherals & accessories."),
+    mk("brand-generic", "Generic", "Unbranded / house brand items."),
+  ];
+}
+
+function seedCustomers(): Customer[] {
+  const now = new Date().toISOString();
+  const mk = (id: string, name: string, email: string, phone: string): Customer => ({
+    id, name, email, phone, address: "", notes: "", createdAt: now, updatedAt: now,
+  });
+  return [
+    mk("cust-001", "Acme Corp", "buyer@acme.example", "+1-555-0101"),
+    mk("cust-002", "Beacon Retail", "orders@beacon.example", "+1-555-0202"),
+    mk("cust-003", "Walk-in Customer", "", ""),
+  ];
+}
+
 export class DemoStore {
   private data: SeedData;
   private version = 0;
