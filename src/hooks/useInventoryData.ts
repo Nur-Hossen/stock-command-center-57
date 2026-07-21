@@ -8,6 +8,10 @@ import type {
   StockMovement,
   PurchaseOrder,
   InventoryRequest,
+  Brand,
+  ItemUnit,
+  Customer,
+  Sale,
 } from "@/types/inventory";
 import type { ItemFilters, StockSummary } from "@/lib/demo-store";
 
