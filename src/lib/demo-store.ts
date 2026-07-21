@@ -74,6 +74,11 @@ export class DemoStore {
     this.data = generateSeedData();
     this.users = SEED_USERS.map((u) => ({ ...u }));
     this.roles = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
+    this.brands = seedBrands();
+    this.units = [];
+    this.customers = seedCustomers();
+    this.sales = [];
+    this.saleCounter = 1000;
     this.version++;
   }
 
