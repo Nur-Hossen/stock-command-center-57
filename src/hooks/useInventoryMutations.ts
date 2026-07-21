@@ -7,6 +7,9 @@ import type {
   StockMovement,
   PurchaseOrder,
   InventoryRequest,
+  Brand,
+  ItemUnit,
+  Customer,
 } from "@/types/inventory";
 import type { DemoStore } from "@/lib/demo-store";
 import { generateStockAlerts } from "@/lib/notification-generators";
