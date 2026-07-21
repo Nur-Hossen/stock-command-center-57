@@ -83,7 +83,7 @@ function CustomersPage() {
       <Input placeholder="Search customers…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
 
       {filtered.length === 0 ? (
-        <EmptyState title="No customers" description="Add your first customer to start tracking sales." />
+        <EmptyState icon={Users} title="No customers" description="Add your first customer to start tracking sales." />
       ) : (
         <div className="divide-y divide-border rounded-lg border border-border">
           {filtered.map((c) => (
