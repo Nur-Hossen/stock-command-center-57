@@ -140,3 +140,63 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
   return useDemoMutation<string>((store, id) => store.deleteCategory(id));
 }
+
+// ─── Brand mutations ────────────────────────────────────
+function throwOnError<T>(result: T | { error: string }): T {
+  if (result && typeof result === "object" && "error" in (result as object)) {
+    throw new Error((result as { error: string }).error);
+  }
+  return result as T;
+}
+
+export function useCreateBrand() {
+  return useDemoMutation<Brand>((store, data) => { throwOnError(store.createBrand(data)); });
+}
+export function useUpdateBrand() {
+  return useDemoMutation<{ id: string; updates: Partial<Brand> }>((store, { id, updates }) => {
+    throwOnError(store.updateBrand(id, updates));
+  });
+}
+export function useDeleteBrand() {
+  return useDemoMutation<string>((store, id) => { throwOnError(store.deleteBrand(id)); });
+}
+
+// ─── Item unit (serial) mutations ───────────────────────
+export function useAddUnit() {
+  return useDemoMutation<Omit<ItemUnit, "id" | "createdAt" | "updatedAt">>((store, data) => {
+    throwOnError(store.addUnit(data));
+  });
+}
+export function useUpdateUnit() {
+  return useDemoMutation<{ id: string; updates: Partial<ItemUnit> }>((store, { id, updates }) => {
+    throwOnError(store.updateUnit(id, updates));
+  });
+}
+export function useDeleteUnit() {
+  return useDemoMutation<string>((store, id) => {
+    if (!store.deleteUnit(id)) throw new Error("Cannot delete a sold unit");
+  });
+}
+
+// ─── Customer mutations ─────────────────────────────────
+export function useCreateCustomer() {
+  return useDemoMutation<Customer>((store, data) => { store.createCustomer(data); });
+}
+export function useUpdateCustomer() {
+  return useDemoMutation<{ id: string; updates: Partial<Customer> }>((store, { id, updates }) => {
+    if (!store.updateCustomer(id, updates)) throw new Error("Customer not found");
+  });
+}
+export function useDeleteCustomer() {
+  return useDemoMutation<string>((store, id) => { throwOnError(store.deleteCustomer(id)); });
+}
+
+// ─── Sale mutations ─────────────────────────────────────
+export function useCreateSale() {
+  return useDemoMutation<Parameters<typeof import("@/lib/demo-store").DemoStore.prototype.createSale>[0]>(
+    (store, data) => { throwOnError(store.createSale(data)); },
+  );
+}
+export function useRefundSale() {
+  return useDemoMutation<string>((store, id) => { throwOnError(store.refundSale(id)); });
+}
