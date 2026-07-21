@@ -56,6 +56,11 @@ export class DemoStore {
   private version = 0;
   private users: DemoUser[] = SEED_USERS.map((u) => ({ ...u }));
   private roles: RoleDefinition[] = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
+  private brands: Brand[] = seedBrands();
+  private units: ItemUnit[] = [];
+  private customers: Customer[] = seedCustomers();
+  private sales: Sale[] = [];
+  private saleCounter = 1000;
 
   constructor() {
     this.data = generateSeedData();
