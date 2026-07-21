@@ -77,8 +77,9 @@ export const BUILTIN_ROLES: RoleDefinition[] = [
     description: "Manage stock, procurement and requests.",
     color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
     permissions: [
-      "create_item", "edit_item", "delete_item",
+      "create_item", "edit_item", "delete_item", "manage_brands", "manage_units",
       "log_movement", "create_po", "manage_suppliers",
+      "manage_customers", "view_sales", "manage_sales",
       "create_request", "approve_request",
       "view_analytics", "export_data",
     ],
