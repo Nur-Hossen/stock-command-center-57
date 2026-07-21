@@ -489,4 +489,206 @@ export class DemoStore {
     this.data.notificationPrefs = { ...prefs };
     this.version++;
   }
+  // ─── Brands ────────────────────────────────────────────
+  getBrands(): Brand[] { return [...this.brands]; }
+  getBrandById(id: string): Brand | undefined { return this.brands.find((b) => b.id === id); }
+  createBrand(brand: Brand): Brand | { error: string } {
+    if (!brand.name.trim()) return { error: "Name is required" };
+    if (this.brands.some((b) => b.name.toLowerCase() === brand.name.trim().toLowerCase()))
+      return { error: "A brand with this name already exists" };
+    const created = { ...brand, name: brand.name.trim() };
+    this.brands.push(created); this.version++; return created;
+  }
+  updateBrand(id: string, updates: Partial<Brand>): Brand | { error: string } {
+    const idx = this.brands.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: "Brand not found" };
+    if (updates.name !== undefined) {
+      const name = updates.name.trim();
+      if (!name) return { error: "Name is required" };
+      if (this.brands.some((b) => b.id !== id && b.name.toLowerCase() === name.toLowerCase()))
+        return { error: "A brand with this name already exists" };
+      updates = { ...updates, name };
+    }
+    this.brands[idx] = { ...this.brands[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.version++;
+    return this.brands[idx];
+  }
+  deleteBrand(id: string): { ok: true } | { error: string } {
+    const inUse = this.data.items.filter((i) => i.brandId === id).length;
+    if (inUse > 0) return { error: `Cannot delete — ${inUse} item${inUse === 1 ? "" : "s"} still use this brand` };
+    const len = this.brands.length;
+    this.brands = this.brands.filter((b) => b.id !== id);
+    if (this.brands.length < len) { this.version++; return { ok: true }; }
+    return { error: "Brand not found" };
+  }
+
+  // ─── Item Units (serialized) ───────────────────────────
+  getUnits(filters?: { itemId?: string; status?: ItemUnitStatus }): ItemUnit[] {
+    let r = this.units;
+    if (filters?.itemId) r = r.filter((u) => u.itemId === filters.itemId);
+    if (filters?.status) r = r.filter((u) => u.status === filters.status);
+    return [...r];
+  }
+  getUnitById(id: string): ItemUnit | undefined { return this.units.find((u) => u.id === id); }
+  getUnitsForItem(itemId: string): ItemUnit[] { return this.units.filter((u) => u.itemId === itemId); }
+
+  addUnit(unit: Omit<ItemUnit, "id" | "createdAt" | "updatedAt">): ItemUnit | { error: string } {
+    const sn = unit.serialNumber.trim();
+    if (!sn) return { error: "Serial number is required" };
+    if (this.units.some((u) => u.serialNumber.toLowerCase() === sn.toLowerCase()))
+      return { error: `Serial number "${sn}" already exists` };
+    const now = new Date().toISOString();
+    const created: ItemUnit = { ...unit, serialNumber: sn, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    this.units.push(created);
+    // Sync item.currentStock as count of in_stock units for serialized items
+    this.syncSerializedStock(unit.itemId);
+    this.version++;
+    return created;
+  }
+
+  updateUnit(id: string, updates: Partial<ItemUnit>): ItemUnit | { error: string } {
+    const idx = this.units.findIndex((u) => u.id === id);
+    if (idx === -1) return { error: "Unit not found" };
+    if (updates.serialNumber !== undefined) {
+      const sn = updates.serialNumber.trim();
+      if (!sn) return { error: "Serial number is required" };
+      if (this.units.some((u) => u.id !== id && u.serialNumber.toLowerCase() === sn.toLowerCase()))
+        return { error: `Serial number "${sn}" already exists` };
+      updates = { ...updates, serialNumber: sn };
+    }
+    this.units[idx] = { ...this.units[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.syncSerializedStock(this.units[idx].itemId);
+    this.version++;
+    return this.units[idx];
+  }
+
+  deleteUnit(id: string): boolean {
+    const u = this.units.find((x) => x.id === id);
+    if (!u) return false;
+    if (u.status === "sold") return false;
+    this.units = this.units.filter((x) => x.id !== id);
+    this.syncSerializedStock(u.itemId);
+    this.version++;
+    return true;
+  }
+
+  private syncSerializedStock(itemId: string) {
+    const item = this.data.items.find((i) => i.id === itemId);
+    if (!item || !item.trackSerials) return;
+    item.currentStock = this.units.filter((u) => u.itemId === itemId && u.status === "in_stock").length;
+    item.updatedAt = new Date().toISOString();
+  }
+
+  // ─── Customers ─────────────────────────────────────────
+  getCustomers(): Customer[] { return [...this.customers]; }
+  getCustomerById(id: string): Customer | undefined { return this.customers.find((c) => c.id === id); }
+  createCustomer(c: Customer): Customer { this.customers.push(c); this.version++; return c; }
+  updateCustomer(id: string, updates: Partial<Customer>): Customer | undefined {
+    const idx = this.customers.findIndex((c) => c.id === id);
+    if (idx === -1) return undefined;
+    this.customers[idx] = { ...this.customers[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.version++;
+    return this.customers[idx];
+  }
+  deleteCustomer(id: string): { ok: true } | { error: string } {
+    const inUse = this.sales.filter((s) => s.customerId === id).length;
+    if (inUse > 0) return { error: `Cannot delete — ${inUse} sale${inUse === 1 ? "" : "s"} reference this customer` };
+    this.customers = this.customers.filter((c) => c.id !== id);
+    this.version++;
+    return { ok: true };
+  }
+
+  // ─── Sales ─────────────────────────────────────────────
+  getSales(): Sale[] { return [...this.sales].sort((a, b) => new Date(b.soldAt).getTime() - new Date(a.soldAt).getTime()); }
+  getSaleById(id: string): Sale | undefined { return this.sales.find((s) => s.id === id); }
+  getSalesForCustomer(customerId: string): Sale[] { return this.sales.filter((s) => s.customerId === customerId); }
+  getSalesForUnit(unitId: string): Sale[] { return this.sales.filter((s) => s.items.some((li) => li.itemUnitId === unitId)); }
+  nextSaleNumber(): string { return `SALE-${this.saleCounter + 1}`; }
+
+  createSale(input: {
+    customerId: string;
+    soldBy: string;
+    lineItems: { itemUnitId: string; unitPrice: number; warrantyMonths?: number }[];
+    taxRate?: number;
+    notes?: string;
+  }): Sale | { error: string } {
+    if (!input.customerId) return { error: "Customer is required" };
+    if (input.lineItems.length === 0) return { error: "Add at least one item" };
+    const chosen: SaleLineItem[] = [];
+    for (const li of input.lineItems) {
+      const unit = this.units.find((u) => u.id === li.itemUnitId);
+      if (!unit) return { error: "Unit not found" };
+      if (unit.status !== "in_stock") return { error: `Serial ${unit.serialNumber} is not available (${unit.status})` };
+      chosen.push({
+        id: crypto.randomUUID(),
+        itemUnitId: unit.id,
+        itemId: unit.itemId,
+        serialNumber: unit.serialNumber,
+        unitPrice: li.unitPrice,
+        warrantyMonths: li.warrantyMonths ?? unit.warrantyMonths,
+      });
+    }
+    const subtotal = chosen.reduce((s, l) => s + l.unitPrice, 0);
+    const tax = Math.round(subtotal * (input.taxRate ?? 0) * 100) / 100;
+    const total = subtotal + tax;
+    const soldAt = new Date().toISOString();
+    this.saleCounter++;
+    const sale: Sale = {
+      id: crypto.randomUUID(),
+      saleNumber: `SALE-${this.saleCounter}`,
+      customerId: input.customerId,
+      status: "completed",
+      items: chosen,
+      subtotal, tax, total,
+      soldAt,
+      soldBy: input.soldBy,
+      notes: input.notes ?? "",
+      createdAt: soldAt,
+      updatedAt: soldAt,
+    };
+    // Mark units sold + set warranty
+    const soldDate = new Date(soldAt);
+    for (const line of chosen) {
+      const idx = this.units.findIndex((u) => u.id === line.itemUnitId);
+      if (idx !== -1) {
+        const expiry = new Date(soldDate);
+        expiry.setMonth(expiry.getMonth() + line.warrantyMonths);
+        this.units[idx] = {
+          ...this.units[idx],
+          status: "sold",
+          soldAt,
+          warrantyMonths: line.warrantyMonths,
+          warrantyExpiresAt: expiry.toISOString(),
+          updatedAt: soldAt,
+        };
+        this.syncSerializedStock(this.units[idx].itemId);
+      }
+    }
+    this.sales.push(sale);
+    this.version++;
+    return sale;
+  }
+
+  refundSale(id: string): Sale | { error: string } {
+    const idx = this.sales.findIndex((s) => s.id === id);
+    if (idx === -1) return { error: "Sale not found" };
+    if (this.sales[idx].status === "refunded") return { error: "Already refunded" };
+    // Return units to stock
+    for (const line of this.sales[idx].items) {
+      const uidx = this.units.findIndex((u) => u.id === line.itemUnitId);
+      if (uidx !== -1) {
+        this.units[uidx] = {
+          ...this.units[uidx],
+          status: "returned",
+          soldAt: null,
+          warrantyExpiresAt: null,
+          updatedAt: new Date().toISOString(),
+        };
+        this.syncSerializedStock(this.units[uidx].itemId);
+      }
+    }
+    this.sales[idx] = { ...this.sales[idx], status: "refunded", updatedAt: new Date().toISOString() };
+    this.version++;
+    return this.sales[idx];
+  }
 }
