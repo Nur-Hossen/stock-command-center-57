@@ -12,6 +12,9 @@ import {
   Settings,
   ChevronRight,
   HelpCircle,
+  Tag,
+  Users as UsersIcon,
+  Receipt,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
