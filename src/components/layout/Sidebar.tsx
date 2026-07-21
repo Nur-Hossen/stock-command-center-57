@@ -12,7 +12,6 @@ import {
   Settings,
   ChevronRight,
   HelpCircle,
-  Tag,
   Users as UsersIcon,
   Receipt,
 } from "lucide-react";
