@@ -7,6 +7,12 @@ import type {
   PurchaseOrder,
   InventoryRequest,
   Notification,
+  Brand,
+  ItemUnit,
+  ItemUnitStatus,
+  Customer,
+  Sale,
+  SaleLineItem,
 } from "@/types/inventory";
 import { MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
