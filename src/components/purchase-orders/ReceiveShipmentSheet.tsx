@@ -20,12 +20,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { PurchaseOrder, Item } from "@/types/inventory";
 
+interface ReceivedLine {
+  lineItemId: string;
+  itemId: string;
+  qty: number;
+  serials?: string[];
+}
+
 interface ReceiveShipmentSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   purchaseOrder: PurchaseOrder;
   items: Item[];
-  onConfirm: (receivedLines: { lineItemId: string; itemId: string; qty: number }[], notes: string) => void;
+  onConfirm: (receivedLines: ReceivedLine[], notes: string) => void;
 }
 
 export function ReceiveShipmentSheet({
