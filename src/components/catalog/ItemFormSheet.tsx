@@ -60,6 +60,7 @@ export function ItemFormSheet({
   onOpenChange,
   item,
   categories,
+  brands,
   suppliers,
   locations,
   existingSkus,
