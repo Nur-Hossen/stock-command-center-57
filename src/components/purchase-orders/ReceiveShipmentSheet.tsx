@@ -160,6 +160,36 @@ export function ReceiveShipmentSheet({
             </Table>
           </div>
 
+          {serialLines.length > 0 && (
+            <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+              <div>
+                <p className="text-sm font-medium">Serial numbers required</p>
+                <p className="text-xs text-muted-foreground">Enter one serial per line (or separated by commas). Count must match Receiving qty.</p>
+              </div>
+              {serialLines.map((li) => {
+                const item = itemMap.get(li.itemId);
+                const qty = qtys[li.id] ?? 0;
+                if (qty === 0) return null;
+                const entered = parseSerials(serialsByLine[li.id] ?? "").length;
+                const ok = entered === qty;
+                return (
+                  <div key={li.id} className="space-y-1">
+                    <Label className="text-xs">
+                      {item?.name} · <span className={ok ? "text-stock-healthy" : "text-stock-low"}>{entered}/{qty}</span>
+                    </Label>
+                    <Textarea
+                      placeholder="SN-0001, SN-0002, ..."
+                      value={serialsByLine[li.id] ?? ""}
+                      onChange={(e) => setSerialsByLine((prev) => ({ ...prev, [li.id]: e.target.value }))}
+                      rows={2}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="receive-notes">Shipment Notes</Label>
             <Textarea
@@ -173,11 +203,12 @@ export function ReceiveShipmentSheet({
 
           <Button
             className="w-full"
-            disabled={!hasAnyQty}
+            disabled={!hasAnyQty || !serialsValid}
             onClick={handleConfirm}
           >
             Confirm Receipt
           </Button>
+
         </div>
       </SheetContent>
     </Sheet>
