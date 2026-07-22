@@ -59,6 +59,7 @@ export function ReceiveShipmentSheet({
   );
 
   const [qtys, setQtys] = useState<Record<string, number>>(initialQtys);
+  const [serialsByLine, setSerialsByLine] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
 
   // Reset when sheet opens with new PO
@@ -66,13 +67,23 @@ export function ReceiveShipmentSheet({
   if (purchaseOrder.id !== lastPOId) {
     setLastPOId(purchaseOrder.id);
     setQtys(initialQtys);
+    setSerialsByLine({});
     setNotes("");
   }
 
-  const hasAnyQty = useMemo(
-    () => Object.values(qtys).some((q) => q > 0),
-    [qtys],
-  );
+  const serialLines = purchaseOrder.items.filter((li) => itemMap.get(li.itemId)?.trackSerials);
+
+  function parseSerials(raw: string): string[] {
+    return raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  }
+
+  const serialsValid = serialLines.every((li) => {
+    const qty = qtys[li.id] ?? 0;
+    if (qty === 0) return true;
+    return parseSerials(serialsByLine[li.id] ?? "").length === qty;
+  });
+
+  const hasAnyQty = useMemo(() => Object.values(qtys).some((q) => q > 0), [qtys]);
 
   function handleQtyChange(lineId: string, remaining: number, value: string) {
     const num = Math.max(0, Math.min(remaining, Math.floor(Number(value) || 0)));
@@ -82,7 +93,11 @@ export function ReceiveShipmentSheet({
   function handleConfirm() {
     const lines = purchaseOrder.items
       .filter((li) => (qtys[li.id] ?? 0) > 0)
-      .map((li) => ({ lineItemId: li.id, itemId: li.itemId, qty: qtys[li.id] }));
+      .map((li) => {
+        const item = itemMap.get(li.itemId);
+        const serials = item?.trackSerials ? parseSerials(serialsByLine[li.id] ?? "") : undefined;
+        return { lineItemId: li.id, itemId: li.itemId, qty: qtys[li.id], serials };
+      });
     onConfirm(lines, notes);
   }
 
