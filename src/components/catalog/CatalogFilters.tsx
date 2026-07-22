@@ -54,6 +54,14 @@ export function CatalogFilters({ filters, onChange, categories, brands, supplier
         </SelectContent>
       </Select>
 
+      <Select value={filters.brandId ?? "all"} onValueChange={(v) => update({ brandId: v === "all" ? undefined : v })}>
+        <SelectTrigger className="h-9 w-full sm:w-36"><SelectValue placeholder="Brand" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Brands</SelectItem>
+          {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
       <Select value={filters.supplierId ?? "all"} onValueChange={(v) => update({ supplierId: v === "all" ? undefined : v })}>
         <SelectTrigger className="h-9 w-full sm:w-40"><SelectValue placeholder="Supplier" /></SelectTrigger>
         <SelectContent>
