@@ -22,6 +22,7 @@ export interface ItemFilters {
   categoryId?: string;
   supplierId?: string;
   locationId?: string;
+  brandId?: string;
   status?: string;
   search?: string;
 }
