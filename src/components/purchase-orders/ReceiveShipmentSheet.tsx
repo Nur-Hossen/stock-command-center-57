@@ -20,12 +20,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { PurchaseOrder, Item } from "@/types/inventory";
 
+interface ReceivedLine {
+  lineItemId: string;
+  itemId: string;
+  qty: number;
+  serials?: string[];
+}
+
 interface ReceiveShipmentSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   purchaseOrder: PurchaseOrder;
   items: Item[];
-  onConfirm: (receivedLines: { lineItemId: string; itemId: string; qty: number }[], notes: string) => void;
+  onConfirm: (receivedLines: ReceivedLine[], notes: string) => void;
 }
 
 export function ReceiveShipmentSheet({
@@ -52,6 +59,7 @@ export function ReceiveShipmentSheet({
   );
 
   const [qtys, setQtys] = useState<Record<string, number>>(initialQtys);
+  const [serialsByLine, setSerialsByLine] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
 
   // Reset when sheet opens with new PO
@@ -59,13 +67,23 @@ export function ReceiveShipmentSheet({
   if (purchaseOrder.id !== lastPOId) {
     setLastPOId(purchaseOrder.id);
     setQtys(initialQtys);
+    setSerialsByLine({});
     setNotes("");
   }
 
-  const hasAnyQty = useMemo(
-    () => Object.values(qtys).some((q) => q > 0),
-    [qtys],
-  );
+  const serialLines = purchaseOrder.items.filter((li) => itemMap.get(li.itemId)?.trackSerials);
+
+  function parseSerials(raw: string): string[] {
+    return raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  }
+
+  const serialsValid = serialLines.every((li) => {
+    const qty = qtys[li.id] ?? 0;
+    if (qty === 0) return true;
+    return parseSerials(serialsByLine[li.id] ?? "").length === qty;
+  });
+
+  const hasAnyQty = useMemo(() => Object.values(qtys).some((q) => q > 0), [qtys]);
 
   function handleQtyChange(lineId: string, remaining: number, value: string) {
     const num = Math.max(0, Math.min(remaining, Math.floor(Number(value) || 0)));
@@ -75,7 +93,11 @@ export function ReceiveShipmentSheet({
   function handleConfirm() {
     const lines = purchaseOrder.items
       .filter((li) => (qtys[li.id] ?? 0) > 0)
-      .map((li) => ({ lineItemId: li.id, itemId: li.itemId, qty: qtys[li.id] }));
+      .map((li) => {
+        const item = itemMap.get(li.itemId);
+        const serials = item?.trackSerials ? parseSerials(serialsByLine[li.id] ?? "") : undefined;
+        return { lineItemId: li.id, itemId: li.itemId, qty: qtys[li.id], serials };
+      });
     onConfirm(lines, notes);
   }
 
@@ -138,6 +160,36 @@ export function ReceiveShipmentSheet({
             </Table>
           </div>
 
+          {serialLines.length > 0 && (
+            <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+              <div>
+                <p className="text-sm font-medium">Serial numbers required</p>
+                <p className="text-xs text-muted-foreground">Enter one serial per line (or separated by commas). Count must match Receiving qty.</p>
+              </div>
+              {serialLines.map((li) => {
+                const item = itemMap.get(li.itemId);
+                const qty = qtys[li.id] ?? 0;
+                if (qty === 0) return null;
+                const entered = parseSerials(serialsByLine[li.id] ?? "").length;
+                const ok = entered === qty;
+                return (
+                  <div key={li.id} className="space-y-1">
+                    <Label className="text-xs">
+                      {item?.name} · <span className={ok ? "text-stock-healthy" : "text-stock-low"}>{entered}/{qty}</span>
+                    </Label>
+                    <Textarea
+                      placeholder="SN-0001, SN-0002, ..."
+                      value={serialsByLine[li.id] ?? ""}
+                      onChange={(e) => setSerialsByLine((prev) => ({ ...prev, [li.id]: e.target.value }))}
+                      rows={2}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="receive-notes">Shipment Notes</Label>
             <Textarea
@@ -151,11 +203,12 @@ export function ReceiveShipmentSheet({
 
           <Button
             className="w-full"
-            disabled={!hasAnyQty}
+            disabled={!hasAnyQty || !serialsValid}
             onClick={handleConfirm}
           >
             Confirm Receipt
           </Button>
+
         </div>
       </SheetContent>
     </Sheet>

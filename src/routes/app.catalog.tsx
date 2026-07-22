@@ -25,7 +25,7 @@ import { ItemDetailSheet } from "@/components/catalog/ItemDetailSheet";
 import { RowActionsMenu } from "@/components/catalog/RowActionsMenu";
 import { MovementFormSheet } from "@/components/movements/MovementFormSheet";
 import { printBarcodeLabels } from "@/components/catalog/PrintBarcodeLabel";
-import { useItems, useCategories, useSuppliers, useLocations } from "@/hooks/useInventoryData";
+import { useItems, useCategories, useSuppliers, useLocations, useBrands } from "@/hooks/useInventoryData";
 import { useCreateItem, useUpdateItem, useDeleteItem } from "@/hooks/useInventoryMutations";
 import { PermissionGate, usePermissions } from "@/hooks/usePermissions";
 import { useRole } from "@/hooks/useRole";
@@ -93,6 +93,7 @@ function CatalogPage() {
 
   const { data: allItems } = useItems(storeFilters);
   const { data: categories } = useCategories();
+  const { data: brands } = useBrands();
   const { data: suppliers } = useSuppliers();
   const { data: locations } = useLocations();
   const createItem = useCreateItem();
@@ -248,7 +249,7 @@ function CatalogPage() {
       </div>
 
       <Card className="p-4">
-        <CatalogFilters filters={filters} onChange={setFilters} categories={categories} suppliers={suppliers} locations={locations} />
+        <CatalogFilters filters={filters} onChange={setFilters} categories={categories} brands={brands} suppliers={suppliers} locations={locations} />
       </Card>
 
       <ErrorBoundary>
@@ -282,6 +283,7 @@ function CatalogPage() {
         onOpenChange={(v) => { setSheetOpen(v); if (!v) setEditItem(null); }}
         item={editItem}
         categories={categories}
+        brands={brands}
         suppliers={suppliers}
         locations={locations}
         existingSkus={existingSkus}
@@ -294,6 +296,7 @@ function CatalogPage() {
         onOpenChange={(v) => { if (!v) closeDetail(); }}
         item={detailItem}
         categories={categories}
+        brands={brands}
         suppliers={suppliers}
         locations={locations}
         onEdit={(item) => { closeDetail(); openEdit(item); }}

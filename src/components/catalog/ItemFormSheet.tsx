@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Item, Category, Supplier, Location } from "@/types/inventory";
+import type { Item, Category, Supplier, Location, Brand } from "@/types/inventory";
 import { ItemStatus } from "@/types/inventory";
 
 const schema = z.object({
@@ -24,6 +24,9 @@ const schema = z.object({
   sku: z.string().min(1, "SKU is required"),
   description: z.string(),
   categoryId: z.string(),
+  brandId: z.string(),
+  model: z.string(),
+  modelYear: z.coerce.number().optional(),
   supplierId: z.string(),
   locationId: z.string(),
   unit: z.string(),
@@ -33,6 +36,8 @@ const schema = z.object({
   costPrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
   status: z.nativeEnum(ItemStatus),
+  trackSerials: z.boolean(),
+  defaultWarrantyMonths: z.coerce.number().min(0),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,6 +47,7 @@ interface ItemFormSheetProps {
   onOpenChange: (open: boolean) => void;
   item?: Item | null;
   categories: Category[];
+  brands: Brand[];
   suppliers: Supplier[];
   locations: Location[];
   existingSkus: string[];
@@ -54,6 +60,7 @@ export function ItemFormSheet({
   onOpenChange,
   item,
   categories,
+  brands,
   suppliers,
   locations,
   existingSkus,
@@ -69,6 +76,9 @@ export function ItemFormSheet({
       sku: "",
       description: "",
       categoryId: "",
+      brandId: "",
+      model: "",
+      modelYear: undefined,
       supplierId: "",
       locationId: "",
       unit: "each",
@@ -78,6 +88,8 @@ export function ItemFormSheet({
       costPrice: 0,
       sellingPrice: 0,
       status: ItemStatus.Active,
+      trackSerials: false,
+      defaultWarrantyMonths: 0,
     },
   });
 
@@ -87,9 +99,12 @@ export function ItemFormSheet({
         name: item.name,
         sku: item.sku,
         description: item.description,
-        categoryId: item.categoryId ?? undefined,
-        supplierId: item.supplierId ?? undefined,
-        locationId: item.locationId ?? undefined,
+        categoryId: item.categoryId ?? "",
+        brandId: item.brandId ?? "",
+        model: item.model ?? "",
+        modelYear: item.modelYear ?? undefined,
+        supplierId: item.supplierId ?? "",
+        locationId: item.locationId ?? "",
         unit: item.unit,
         currentStock: item.currentStock,
         reorderPoint: item.reorderPoint,
@@ -97,6 +112,8 @@ export function ItemFormSheet({
         costPrice: item.costPrice,
         sellingPrice: item.sellingPrice,
         status: item.status,
+        trackSerials: item.trackSerials ?? false,
+        defaultWarrantyMonths: item.defaultWarrantyMonths ?? 0,
       });
     } else if (open) {
       reset();
@@ -113,8 +130,10 @@ export function ItemFormSheet({
     onSave({
       ...data,
       categoryId: data.categoryId || null,
+      brandId: data.brandId || null,
       supplierId: data.supplierId || null,
       locationId: data.locationId || null,
+      modelYear: data.modelYear ?? null,
     });
   };
 
@@ -150,18 +169,55 @@ export function ItemFormSheet({
           {/* Classification */}
           <fieldset className="space-y-3">
             <legend className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Classification</legend>
-            <div>
-              <label className={labelCls}>Category</label>
-              <Select value={watch("categoryId") ?? ""} onValueChange={(v) => setValue("categoryId", v || "")}>
-                <SelectTrigger className="h-9"><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Category</label>
+                <Select value={watch("categoryId") ?? ""} onValueChange={(v) => setValue("categoryId", v || "")}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className={labelCls}>Brand</label>
+                <Select value={watch("brandId") ?? ""} onValueChange={(v) => setValue("brandId", v || "")}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select brand" /></SelectTrigger>
+                  <SelectContent>
+                    {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Model</label>
+                <input {...register("model")} className={inputCls} placeholder="e.g. Galaxy Buds Pro" />
+              </div>
+              <div>
+                <label className={labelCls}>Model Year</label>
+                <input type="number" {...register("modelYear")} className={inputCls} placeholder="e.g. 2024" />
+              </div>
             </div>
             <div>
               <label className={labelCls}>Unit of Measure</label>
               <input {...register("unit")} className={inputCls} placeholder="each, kg, box…" />
+            </div>
+          </fieldset>
+
+          {/* Serial tracking */}
+          <fieldset className="space-y-3">
+            <legend className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Serial Tracking</legend>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" {...register("trackSerials")} className="mt-0.5" />
+              <span>
+                <span className="font-medium">Track individual serial numbers</span>
+                <span className="block text-xs text-muted-foreground">Each physical unit is tracked separately for warranty and sales history.</span>
+              </span>
+            </label>
+            <div>
+              <label className={`${labelCls} flex items-center gap-1`}>Default Warranty (months) <HelpTooltip text="Applied to each sold unit unless overridden at sale time." /></label>
+              <input type="number" min={0} {...register("defaultWarrantyMonths")} className={inputCls} />
             </div>
           </fieldset>
 

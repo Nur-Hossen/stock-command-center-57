@@ -9,13 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import type { Category, Supplier, Location } from "@/types/inventory";
+import type { Category, Supplier, Location, Brand } from "@/types/inventory";
 import type { ItemFilters } from "@/lib/demo-store";
 
 interface CatalogFiltersProps {
   filters: ItemFilters;
   onChange: (f: ItemFilters) => void;
   categories: Category[];
+  brands: Brand[];
   suppliers: Supplier[];
   locations: Location[];
 }
@@ -27,10 +28,10 @@ const STATUS_OPTIONS = [
   { value: "out-of-stock", label: "Out of Stock" },
 ];
 
-export function CatalogFilters({ filters, onChange, categories, suppliers, locations }: CatalogFiltersProps) {
+export function CatalogFilters({ filters, onChange, categories, brands, suppliers, locations }: CatalogFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const activeCount = [filters.categoryId, filters.supplierId, filters.status, filters.locationId, filters.search].filter(Boolean).length;
+  const activeCount = [filters.categoryId, filters.brandId, filters.supplierId, filters.status, filters.locationId, filters.search].filter(Boolean).length;
 
   const update = (patch: Partial<ItemFilters>) => onChange({ ...filters, ...patch });
   const clear = () => onChange({});
@@ -50,6 +51,14 @@ export function CatalogFilters({ filters, onChange, categories, suppliers, locat
         <SelectContent>
           <SelectItem value="all">All Categories</SelectItem>
           {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.brandId ?? "all"} onValueChange={(v) => update({ brandId: v === "all" ? undefined : v })}>
+        <SelectTrigger className="h-9 w-full sm:w-36"><SelectValue placeholder="Brand" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Brands</SelectItem>
+          {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
         </SelectContent>
       </Select>
 

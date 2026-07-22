@@ -22,6 +22,7 @@ export interface ItemFilters {
   categoryId?: string;
   supplierId?: string;
   locationId?: string;
+  brandId?: string;
   status?: string;
   search?: string;
 }
@@ -259,6 +260,7 @@ export class DemoStore {
     if (filters?.categoryId) result = result.filter((i) => i.categoryId === filters.categoryId);
     if (filters?.supplierId) result = result.filter((i) => i.supplierId === filters.supplierId);
     if (filters?.locationId) result = result.filter((i) => i.locationId === filters.locationId);
+    if (filters?.brandId) result = result.filter((i) => i.brandId === filters.brandId);
     if (filters?.status) result = result.filter((i) => i.status === filters.status);
     if (filters?.search) {
       const q = filters.search.toLowerCase();

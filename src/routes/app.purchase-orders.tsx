@@ -16,6 +16,7 @@ import {
   useUpdatePurchaseOrder,
   useCreateMovement,
   useUpdateItem,
+  useAddUnit,
 } from "@/hooks/useInventoryMutations";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -49,6 +50,7 @@ function PurchaseOrdersPage() {
   const updatePO = useUpdatePurchaseOrder();
   const createMovement = useCreateMovement();
   const updateItem = useUpdateItem();
+  const addUnit = useAddUnit();
   const canManagePOs = can("create_po");
   const isAdmin = role === "admin";
   const [filters, setFilters] = useState<POFilters>(EMPTY_PO_FILTERS);
@@ -178,7 +180,7 @@ function PurchaseOrdersPage() {
             const now = new Date().toISOString();
             const po = receivePO!;
 
-            // 1. Create stock movements for each received line
+            // 1. Create stock movements + units (or increment stock) for each received line
             for (const line of receivedLines) {
               createMovement.mutate({
                 id: crypto.randomUUID(),
@@ -193,15 +195,33 @@ function PurchaseOrdersPage() {
                 createdAt: now,
               });
 
-              // 2. Update item currentStock
               const item = catalogItems.find((i) => i.id === line.itemId);
-              if (item) {
+              if (!item) continue;
+
+              if (item.trackSerials && line.serials && line.serials.length > 0) {
+                // Create one unit per serial; stock is synced via syncSerializedStock
+                for (const sn of line.serials) {
+                  addUnit.mutate({
+                    itemId: item.id,
+                    serialNumber: sn,
+                    status: "in_stock",
+                    locationId: item.locationId ?? null,
+                    receivedAt: now,
+                    soldAt: null,
+                    warrantyMonths: item.defaultWarrantyMonths ?? 0,
+                    warrantyExpiresAt: null,
+                    cost: item.costPrice,
+                    notes: `Received via ${po.orderNumber}`,
+                  });
+                }
+              } else {
                 updateItem.mutate({
                   id: item.id,
                   updates: { currentStock: item.currentStock + line.qty, updatedAt: now },
                 });
               }
             }
+
 
             // 3. Update PO line items received quantities
             const updatedItems = po.items.map((li) => {
