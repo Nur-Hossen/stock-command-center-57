@@ -249,7 +249,7 @@ function CatalogPage() {
       </div>
 
       <Card className="p-4">
-        <CatalogFilters filters={filters} onChange={setFilters} categories={categories} suppliers={suppliers} locations={locations} />
+        <CatalogFilters filters={filters} onChange={setFilters} categories={categories} brands={brands} suppliers={suppliers} locations={locations} />
       </Card>
 
       <ErrorBoundary>
