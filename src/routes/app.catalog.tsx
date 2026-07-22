@@ -93,6 +93,7 @@ function CatalogPage() {
 
   const { data: allItems } = useItems(storeFilters);
   const { data: categories } = useCategories();
+  const { data: brands } = useBrands();
   const { data: suppliers } = useSuppliers();
   const { data: locations } = useLocations();
   const createItem = useCreateItem();
