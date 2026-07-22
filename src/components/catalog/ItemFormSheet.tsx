@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Item, Category, Supplier, Location } from "@/types/inventory";
+import type { Item, Category, Supplier, Location, Brand } from "@/types/inventory";
 import { ItemStatus } from "@/types/inventory";
 
 const schema = z.object({
@@ -24,6 +24,9 @@ const schema = z.object({
   sku: z.string().min(1, "SKU is required"),
   description: z.string(),
   categoryId: z.string(),
+  brandId: z.string(),
+  model: z.string(),
+  modelYear: z.coerce.number().optional(),
   supplierId: z.string(),
   locationId: z.string(),
   unit: z.string(),
@@ -33,6 +36,8 @@ const schema = z.object({
   costPrice: z.coerce.number().min(0),
   sellingPrice: z.coerce.number().min(0),
   status: z.nativeEnum(ItemStatus),
+  trackSerials: z.boolean(),
+  defaultWarrantyMonths: z.coerce.number().min(0),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,6 +47,7 @@ interface ItemFormSheetProps {
   onOpenChange: (open: boolean) => void;
   item?: Item | null;
   categories: Category[];
+  brands: Brand[];
   suppliers: Supplier[];
   locations: Location[];
   existingSkus: string[];
