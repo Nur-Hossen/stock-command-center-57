@@ -76,6 +76,9 @@ export function ItemFormSheet({
       sku: "",
       description: "",
       categoryId: "",
+      brandId: "",
+      model: "",
+      modelYear: undefined,
       supplierId: "",
       locationId: "",
       unit: "each",
@@ -85,6 +88,8 @@ export function ItemFormSheet({
       costPrice: 0,
       sellingPrice: 0,
       status: ItemStatus.Active,
+      trackSerials: false,
+      defaultWarrantyMonths: 0,
     },
   });
 
@@ -94,9 +99,12 @@ export function ItemFormSheet({
         name: item.name,
         sku: item.sku,
         description: item.description,
-        categoryId: item.categoryId ?? undefined,
-        supplierId: item.supplierId ?? undefined,
-        locationId: item.locationId ?? undefined,
+        categoryId: item.categoryId ?? "",
+        brandId: item.brandId ?? "",
+        model: item.model ?? "",
+        modelYear: item.modelYear ?? undefined,
+        supplierId: item.supplierId ?? "",
+        locationId: item.locationId ?? "",
         unit: item.unit,
         currentStock: item.currentStock,
         reorderPoint: item.reorderPoint,
@@ -104,6 +112,8 @@ export function ItemFormSheet({
         costPrice: item.costPrice,
         sellingPrice: item.sellingPrice,
         status: item.status,
+        trackSerials: item.trackSerials ?? false,
+        defaultWarrantyMonths: item.defaultWarrantyMonths ?? 0,
       });
     } else if (open) {
       reset();
@@ -120,8 +130,10 @@ export function ItemFormSheet({
     onSave({
       ...data,
       categoryId: data.categoryId || null,
+      brandId: data.brandId || null,
       supplierId: data.supplierId || null,
       locationId: data.locationId || null,
+      modelYear: data.modelYear ?? null,
     });
   };
 
