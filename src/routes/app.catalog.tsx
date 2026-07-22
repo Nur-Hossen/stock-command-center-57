@@ -296,6 +296,7 @@ function CatalogPage() {
         onOpenChange={(v) => { if (!v) closeDetail(); }}
         item={detailItem}
         categories={categories}
+        brands={brands}
         suppliers={suppliers}
         locations={locations}
         onEdit={(item) => { closeDetail(); openEdit(item); }}
