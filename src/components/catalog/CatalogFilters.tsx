@@ -9,13 +9,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import type { Category, Supplier, Location } from "@/types/inventory";
+import type { Category, Supplier, Location, Brand } from "@/types/inventory";
 import type { ItemFilters } from "@/lib/demo-store";
 
 interface CatalogFiltersProps {
   filters: ItemFilters;
   onChange: (f: ItemFilters) => void;
   categories: Category[];
+  brands: Brand[];
   suppliers: Supplier[];
   locations: Location[];
 }
@@ -27,10 +28,10 @@ const STATUS_OPTIONS = [
   { value: "out-of-stock", label: "Out of Stock" },
 ];
 
-export function CatalogFilters({ filters, onChange, categories, suppliers, locations }: CatalogFiltersProps) {
+export function CatalogFilters({ filters, onChange, categories, brands, suppliers, locations }: CatalogFiltersProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const activeCount = [filters.categoryId, filters.supplierId, filters.status, filters.locationId, filters.search].filter(Boolean).length;
+  const activeCount = [filters.categoryId, filters.brandId, filters.supplierId, filters.status, filters.locationId, filters.search].filter(Boolean).length;
 
   const update = (patch: Partial<ItemFilters>) => onChange({ ...filters, ...patch });
   const clear = () => onChange({});
