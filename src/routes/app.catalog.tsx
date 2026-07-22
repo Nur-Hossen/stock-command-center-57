@@ -283,6 +283,7 @@ function CatalogPage() {
         onOpenChange={(v) => { setSheetOpen(v); if (!v) setEditItem(null); }}
         item={editItem}
         categories={categories}
+        brands={brands}
         suppliers={suppliers}
         locations={locations}
         existingSkus={existingSkus}
