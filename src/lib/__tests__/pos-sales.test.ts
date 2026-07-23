@@ -6,7 +6,7 @@ function addItem(store: DemoStore, opts: { trackSerials: boolean; sellingPrice?:
   const item = {
     id: crypto.randomUUID(), sku: "SKU-" + Math.random().toString(36).slice(2, 8),
     barcode: null, name: "Test Item", description: "", categoryId: null, brandId: null,
-    model: "", modelYear: null, status: "active" as const, unit: "ea",
+    model: "", modelYear: null, status: "active" as any, unit: "ea",
     currentStock: 0, reorderPoint: 5, reorderQuantity: 10,
     costPrice: 50, sellingPrice: opts.sellingPrice ?? 100,
     locationId: null, supplierId: null, imageUrl: null,
