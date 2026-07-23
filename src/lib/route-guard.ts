@@ -18,6 +18,9 @@ const ROUTE_PERMISSION: Record<string, PermissionAction | null> = {
   "/app/ai-insights": "view_analytics",
   "/app/customers": "manage_customers",
   "/app/sales": "view_sales",
+  "/app/pos": "open_pos",
+  "/app/warranty": "check_warranty",
+  "/app/warranty/claims": "manage_warranty_claims",
   "/app/settings": "access_settings",
 };
 
