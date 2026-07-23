@@ -13,6 +13,11 @@ import type {
   Customer,
   Sale,
   SaleLineItem,
+  SaleChannel,
+  WarrantyType,
+  WarrantyClaim,
+  WarrantyClaimStatus,
+  SalesSettings,
 } from "@/types/inventory";
 import { MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
