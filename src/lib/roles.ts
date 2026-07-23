@@ -83,7 +83,8 @@ export const BUILTIN_ROLES: RoleDefinition[] = [
     permissions: [
       "create_item", "edit_item", "delete_item", "manage_brands", "manage_units",
       "log_movement", "create_po", "manage_suppliers",
-      "manage_customers", "view_sales", "manage_sales",
+      "manage_customers", "view_sales", "manage_sales", "open_pos", "apply_discount",
+      "check_warranty", "manage_warranty_claims",
       "create_request", "approve_request",
       "view_analytics", "export_data",
     ],
