@@ -30,15 +30,17 @@ function CustomersPage() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", notes: "" });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; address: string; notes: string; type: "retail" | "dealer" }>(
+    { name: "", email: "", phone: "", address: "", notes: "", type: "retail" },
+  );
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (sheetOpen) {
       setForm(editing
-        ? { name: editing.name, email: editing.email, phone: editing.phone, address: editing.address, notes: editing.notes }
-        : { name: "", email: "", phone: "", address: "", notes: "" });
+        ? { name: editing.name, email: editing.email, phone: editing.phone, address: editing.address, notes: editing.notes, type: editing.type }
+        : { name: "", email: "", phone: "", address: "", notes: "", type: "retail" });
     }
   }, [sheetOpen, editing]);
 
@@ -60,7 +62,7 @@ function CustomersPage() {
       });
     } else {
       const now = new Date().toISOString();
-      createC.mutate({ id: crypto.randomUUID(), ...form, createdAt: now, updatedAt: now }, {
+      createC.mutate({ id: crypto.randomUUID(), ...form, balance: 0, createdAt: now, updatedAt: now }, {
         onSuccess: () => { toast.success("Customer created"); setSheetOpen(false); },
       });
     }
