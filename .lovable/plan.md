@@ -1,82 +1,113 @@
-# Brands, Serialized Units & Sales
 
-Adds three connected features to Stackwise:
+# POS, Sales Channels & Warranty — Merged Plan
 
-1. **Brands** — full CRUD entity, linkable to items.
-2. **Serialized units** — each physical unit (e.g. a specific Galaxy Buds Pro) is tracked by serial number with status, warranty, and history.
-3. **Sales module** — customers + sales/invoices linking serial units to buyers.
+Your logic and the current app overlap on ~70% (customers, serialized units, sales, warranty-on-sale). The gaps: **dealer channel**, **barcode/serial-scan POS UX**, **discounts**, **invoice numbering + templates**, **warranty check screen**, and **warranty claims**. Plan below merges both into one coherent module without breaking existing data.
 
----
+## What we keep from current build
+- `ItemUnit` (status, warrantyExpiresAt) — already the source of truth for serials.
+- `Sale` + `SaleLineItem` — extend, don't replace.
+- `Customer` + `useCreateSale` / `useRefundSale` mutations.
+- Existing Sales list page (becomes the "Sales History" view).
 
-## 1. Data model (Supabase migrations + demo store)
+## What we add / change
 
-New tables (with GRANTs + RLS scoped to `authenticated`, admin/manager write):
+### 1. Data model (extend `src/types/inventory.ts` + demo-store)
+- `Customer`: add `type: "retail" | "dealer"`, `balance: number`, `dealerWarrantyPolicy?` (optional override).
+- `Item` / product: add `warrantyMonthsRetail`, `warrantyMonthsDealer`, `warrantyType: "service" | "replacement"`.
+- `Sale`: add `channel: "retail" | "dealer"`, `invoiceNumber` (INV-YYYY-NNNN) or `challanNumber` (DC-YYYY-NNNN), `discountTotal`, `showDiscountOnInvoice`, `amountPaid`, `balanceDue`.
+- `SaleLineItem`: add `lineDiscount`.
+- New `WarrantyClaim`: `{ id, itemUnitId, saleId, claimType: "service"|"replacement", status: "pending"|"in_progress"|"resolved"|"rejected", notes, createdAt, resolvedAt }`.
+- New setting `salesSettings`: `{ showDiscountOnInvoice: boolean, invoiceCounterByYear: Record<number, number>, challanCounterByYear: Record<number, number> }`.
 
-- **brands** — `id, name (unique), logo_url, website, description, is_active, created_at, updated_at`.
-- **item_units** — one row per physical unit:
-  `id, item_id (FK items), serial_number (unique), status ('in_stock'|'reserved'|'sold'|'returned'|'warranty_service'|'retired'), location_id, purchase_order_item_id (nullable), received_at, warranty_months, warranty_expires_at, cost, notes, created_at, updated_at`.
-- **customers** — `id, name, email, phone, address, notes, created_at, updated_at`.
-- **sales** — `id, sale_number (auto), customer_id, status ('draft'|'completed'|'refunded'), sold_by, sold_at, subtotal, tax, total, notes, created_at, updated_at`.
-- **sale_items** — `id, sale_id (CASCADE), item_unit_id (unique, FK item_units), item_id, unit_price, warranty_months`. One unit can appear on at most one active sale.
+### 2. POS screen — `/app/pos` (new route)
+Single interface, two channels:
 
-Changes to existing tables:
-- **items**: add `brand_id uuid → brands`, `model` text, `model_year` int, `track_serials` boolean default false, `default_warranty_months` int.
-- **stock_movements**: add optional `item_unit_id` so unit-level moves are auditable.
+```text
+┌──────────────────────────────────────────┐
+│ Channel: [Retail] [Dealer]               │
+│ Customer: [search / +new]                │
+├──────────────────────────────────────────┤
+│ Scan serial: [_________]  (autofocus)    │
+│                                          │
+│  Cart:                                   │
+│   SN 12345  Samsung Buds  $120  [-disc] │
+│   SN 12346  Samsung Buds  $120  [-disc] │
+├──────────────────────────────────────────┤
+│ Subtotal $240   Gross discount [__]      │
+│ Tax   Total  Amount paid  Balance        │
+│                    [Confirm Sale]        │
+└──────────────────────────────────────────┘
+```
 
-Triggers/logic:
-- On sale completion: mark linked units `sold`, set `warranty_expires_at = sold_at + warranty_months`, decrement `items.quantity_on_hand`, insert a `shipped` stock_movement per unit.
-- On PO receive (existing flow): when `track_serials=true`, prompt for serials → insert `item_units` rows in `in_stock` and increment quantity from that count.
-- For non-serialized items, current quantity flow is unchanged.
+Scan validation (matches your logic):
+- Lookup unit by serial OR barcode.
+- If `status === "in_stock"` → add to cart with model + selling price.
+- Else → toast error `"Invalid or Already Sold"`, block.
 
-Mirror all of the above in `src/lib/demo-store.ts` (in-memory) and demo seed files so the app keeps working in demo mode without Supabase.
+Confirm = single atomic op in `demoStore.createPosSale()`:
+1. Re-check every unit is still `in_stock` (else rollback + error).
+2. Compute warranty per unit: retail → `soldAt + warrantyMonthsRetail`; dealer → policy from model.
+3. Flip unit → `sold`, set `soldAt` + `warrantyExpiresAt`.
+4. Generate invoice/challan number (year-scoped counter).
+5. Write `Sale`. For dealer with unpaid balance: increment `customer.balance` (accounts receivable).
+6. Create stock movement records.
 
-## 2. UI
+### 3. Discounts & invoice settings
+- Line-level `lineDiscount` on each cart row.
+- Gross discount on cart total.
+- Toggle in Settings → **Sales**: "Print discount on invoice" (also hides discount column in printable view).
+- Invoice number `INV-YYYY-NNNN`, dealer challan `DC-YYYY-NNNN`, both reset per calendar year.
 
-**Settings → Brands tab** (new `BrandManager.tsx`): list, create/edit sheet (name, logo, website, description, active), delete with confirm. Reuses existing manager patterns from Categories/Suppliers.
+### 4. Printable invoice / challan
+`src/components/pos/InvoicePrint.tsx` — two templates:
+- **Retail**: header, items, totals, warranty card block per serial.
+- **Dealer**: "Delivery Challan" header, items, no warranty card (dealer policy referenced), signature block.
 
-**Catalog**:
-- `ItemFormSheet`: add Brand dropdown, Model, Model Year, "Track individual serial numbers" toggle, Default warranty (months).
-- `CatalogFilters`: add Brand filter.
-- `CatalogTable`: add optional Brand column.
-- `ItemDetailSheet`: new **Units** tab (only when `track_serials`) listing serial numbers with status badge, warranty expiry, current location, and per-unit history. Add/edit/retire unit actions.
+`window.print()` action from confirmation screen.
 
-**Purchase Orders → Receive Shipment**: when a line item is serialized, require entering N serial numbers before confirming receipt.
+### 5. Warranty Check screen — `/app/warranty`
+Input: serial number (type or scan) → shows:
+- Model + description, purchase date (unit.receivedAt), sale date + invoice #, customer/dealer, warranty type, expiry, status badge (green Active / red Expired).
+- "Log Claim" button → creates `WarrantyClaim`.
 
-**New route `/app/sales`** (`app.sales.tsx`):
-- Sales list table with filters (status, customer, date range).
-- New Sale sheet: pick customer (or quick-create), scan/enter serial numbers OR pick item + unit, price per unit, warranty override, totals. Completing the sale marks units sold.
-- Sale detail sheet: line items, customer, print/export.
+### 6. Warranty claims — `/app/warranty/claims`
+List + filter by status. Update lifecycle Pending → In Progress → Resolved/Rejected. When status = "in_progress", unit status flips to `warranty_service` (already an enum value); on resolved/rejected returns to previous.
 
-**New route `/app/customers`** (`app.customers.tsx`): CRUD list + detail sheet showing purchase history (all serial units they own, warranty status).
+### 7. Navigation
+Add sidebar: **POS**, **Warranty** (with sub: Check, Claims). Keep existing Sales page as read-only history.
 
-**Warranty view**: on unit detail — status chip (Active / Expiring soon / Expired) computed from `warranty_expires_at`. Filter on Units tab and in a small "Warranty" section on the customer detail.
+### 8. Permissions
+Extend catalog: `open_pos`, `sell_retail`, `sell_dealer`, `apply_discount`, `override_discount_visibility`, `check_warranty`, `manage_warranty_claims`.
 
-**Sidebar & command palette**: add Sales, Customers entries; permission-gated.
+### 9. SQL migrations (docs/migrations)
+- `00016_sales_pos_extensions.sql` — alter customers/items/sales; add sale_items.line_discount.
+- `00017_warranty_claims.sql` — new table + RLS + GRANTs.
+- `00018_sales_settings.sql` — settings row.
 
-## 3. Permissions
+### 10. Testing
+- **Unit tests** (`bunx vitest run`) for demo-store:
+  - Scan available/sold/damaged serial paths.
+  - Retail warranty date = sale + N months.
+  - Dealer warranty uses model policy, not sale date.
+  - Invoice/challan counters reset per year and are monotonic within year.
+  - Discount visibility flag doesn't affect totals.
+  - Dealer partial payment increments `customer.balance`.
+  - Refund resets unit to `in_stock`, clears warranty, reverses balance.
+  - Double-scan same serial in one cart is blocked.
+- **Playwright smoke** against localhost: open POS → scan → confirm → check warranty screen shows Active.
 
-Extend `PERMISSION_CATALOG` in `src/lib/roles.ts` with: `brands.manage`, `sales.view`, `sales.create`, `sales.manage`, `customers.view`, `customers.manage`, `units.view`, `units.manage`. Update built-in Admin/Manager/Requestor defaults. Wire into `route-guard.ts` for the new routes.
+## Build order
+1. Types + demo-store extensions + settings.
+2. `createPosSale`, invoice numbering, warranty compute helpers.
+3. Vitest for the store logic (green before UI).
+4. POS route + cart + printable template.
+5. Warranty check + claims routes.
+6. Sidebar, permissions, SQL migrations.
+7. Playwright smoke.
 
-## 4. Testing
+## Non-goals (call out)
+- No real accounting ledger — dealer credit tracked only via `customer.balance` (matches current demo scope).
+- No tax engine beyond a flat % from settings.
+- Barcode "scan" = keyboard input into focused field (USB scanners act as keyboards). No camera scanning yet.
 
-- **Unit tests** (Vitest): serial uniqueness, warranty-expiry computation, sale completion transitions unit statuses correctly, quantity-on-hand stays consistent with unit counts for serialized items.
-- **E2E** (Playwright, extending existing `e2e/` setup): create brand → create serialized item under it → receive PO with 3 serials → create customer → sell 2 serials → verify quantity dropped by 2, units marked sold, warranty dates set, customer detail shows both units, third unit still in stock.
-- **Manual demo-mode smoke check** via the preview: brand CRUD, serial entry on receive, sale flow, warranty badge states.
-
-## 5. Build order
-
-1. Migrations + demo-store types/methods + roles/permissions.
-2. Brands CRUD (settings tab + item form field + filter).
-3. Serialized units: item toggle, receive flow, Units tab on item detail.
-4. Customers CRUD.
-5. Sales module (list + create + detail).
-6. Warranty surfacing + sidebar/command palette entries.
-7. Tests, then a documentation update in `docs/` (new PRD entry + schema doc).
-
-## Technical notes
-
-- Follow existing hook/mutation patterns (`useInventoryData`, `useInventoryMutations`) — no `useEffect + fetch`.
-- Server writes go through `createServerFn` with `requireSupabaseAuth`; RLS enforces admin/manager for writes.
-- `sale_items.item_unit_id UNIQUE` prevents double-selling the same physical unit.
-- Serial uniqueness is per table (globally unique) with a DB constraint; catch conflicts and surface friendly errors in the form.
-- Keep everything working in demo mode (no Supabase required) by mirroring logic in `demo-store.ts` and demo seeds.
+Approve and I'll start with step 1.
