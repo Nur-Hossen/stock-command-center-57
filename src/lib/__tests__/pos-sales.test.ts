@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { DemoStore } from "@/lib/demo-store";
+import { ItemStatus } from "@/types/inventory";
 
 function addItem(store: DemoStore, opts: { trackSerials: boolean; sellingPrice?: number; defaultWarrantyMonths?: number }) {
   const now = new Date().toISOString();
   const item = {
     id: crypto.randomUUID(), sku: "SKU-" + Math.random().toString(36).slice(2, 8),
     barcode: null, name: "Test Item", description: "", categoryId: null, brandId: null,
-    model: "", modelYear: null, status: "active" as any, unit: "ea",
+    model: "", modelYear: null, status: ItemStatus.Active, unit: "ea",
     currentStock: 0, reorderPoint: 5, reorderQuantity: 10,
     costPrice: 50, sellingPrice: opts.sellingPrice ?? 100,
     locationId: null, supplierId: null, imageUrl: null,
