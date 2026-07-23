@@ -1,0 +1,16 @@
+{
+  "prdId": "PRD-29",
+  "feature": "Brands, Serialized Units & Sales",
+  "buildOrder": 29,
+  "stories": [
+    { "id": "US-29-001", "title": "Brand entity + CRUD in Settings", "isPassed": true, "notes": "BrandManager.tsx with list/create/rename/delete; unique name; item-count badge." },
+    { "id": "US-29-002", "title": "Items linked to brands", "isPassed": true, "notes": "ItemFormSheet brand dropdown; CatalogFilters brand filter; brandId on Item." },
+    { "id": "US-29-003", "title": "Serialized inventory (item_units)", "isPassed": true, "notes": "Per-unit serial, status, warranty; trackSerials toggle on items; Units tab in ItemDetailSheet." },
+    { "id": "US-29-004", "title": "Serial entry on PO receive", "isPassed": true, "notes": "ReceiveShipmentSheet requires N serials for serialized lines; creates ItemUnit rows in in_stock." },
+    { "id": "US-29-005", "title": "Customers CRUD", "isPassed": true, "notes": "/app/customers route + demo-store CRUD." },
+    { "id": "US-29-006", "title": "Sales module", "isPassed": true, "notes": "/app/sales route; sale + sale_items with unique item_unit_id; completing marks unit sold + sets warranty_expires_at." },
+    { "id": "US-29-007", "title": "Warranty surfacing", "isPassed": true, "notes": "Active/Expiring/Expired chips computed from warranty_expires_at on unit + customer detail." },
+    { "id": "US-29-008", "title": "Permissions + route guards", "isPassed": true, "notes": "brands.manage, sales.*, customers.*, units.* added to PERMISSION_CATALOG and wired into route-guard." },
+    { "id": "US-29-009", "title": "SQL migrations", "isPassed": true, "notes": "00012_brands, 00013_item_units, 00014_customers, 00015_sales with GRANTs + RLS." }
+  ]
+}
