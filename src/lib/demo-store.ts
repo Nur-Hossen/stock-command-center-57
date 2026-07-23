@@ -83,6 +83,12 @@ function seedCustomers(): Customer[] {
   ];
 }
 
+const DEFAULT_SALES_SETTINGS: SalesSettings = {
+  showDiscountOnInvoice: true,
+  defaultTaxRate: 0,
+  businessName: "Stackwise Store",
+};
+
 export class DemoStore {
   private data: SeedData;
   private version = 0;
@@ -93,6 +99,10 @@ export class DemoStore {
   private customers: Customer[] = seedCustomers();
   private sales: Sale[] = [];
   private saleCounter = 1000;
+  private invoiceCounterByYear: Record<number, number> = {};
+  private challanCounterByYear: Record<number, number> = {};
+  private warrantyClaims: WarrantyClaim[] = [];
+  private salesSettings: SalesSettings = { ...DEFAULT_SALES_SETTINGS };
 
   constructor() {
     this.data = generateSeedData();
@@ -111,6 +121,10 @@ export class DemoStore {
     this.customers = seedCustomers();
     this.sales = [];
     this.saleCounter = 1000;
+    this.invoiceCounterByYear = {};
+    this.challanCounterByYear = {};
+    this.warrantyClaims = [];
+    this.salesSettings = { ...DEFAULT_SALES_SETTINGS };
     this.version++;
   }
 
