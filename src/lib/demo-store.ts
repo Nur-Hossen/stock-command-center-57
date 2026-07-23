@@ -626,6 +626,177 @@ export class DemoStore {
   getSalesForUnit(unitId: string): Sale[] { return this.sales.filter((s) => s.items.some((li) => li.itemUnitId === unitId)); }
   nextSaleNumber(): string { return `SALE-${this.saleCounter + 1}`; }
 
+  /** Preview the next invoice/challan document number for a channel + year. */
+  peekDocumentNumber(channel: SaleChannel, year = new Date().getFullYear()): string {
+    const prefix = channel === "dealer" ? "DC" : "INV";
+    const counter = channel === "dealer"
+      ? (this.challanCounterByYear[year] ?? 0)
+      : (this.invoiceCounterByYear[year] ?? 0);
+    return `${prefix}-${year}-${String(counter + 1).padStart(4, "0")}`;
+  }
+
+  private nextDocumentNumber(channel: SaleChannel, at: Date): string {
+    const year = at.getFullYear();
+    const prefix = channel === "dealer" ? "DC" : "INV";
+    if (channel === "dealer") {
+      this.challanCounterByYear[year] = (this.challanCounterByYear[year] ?? 0) + 1;
+      return `${prefix}-${year}-${String(this.challanCounterByYear[year]).padStart(4, "0")}`;
+    }
+    this.invoiceCounterByYear[year] = (this.invoiceCounterByYear[year] ?? 0) + 1;
+    return `${prefix}-${year}-${String(this.invoiceCounterByYear[year]).padStart(4, "0")}`;
+  }
+
+  /** Lookup a unit by serial number OR item barcode+serial for POS scan. */
+  findUnitByScan(code: string): ItemUnit | undefined {
+    const q = code.trim();
+    if (!q) return undefined;
+    const bySerial = this.units.find((u) => u.serialNumber.toLowerCase() === q.toLowerCase());
+    if (bySerial) return bySerial;
+    // Fallback: item barcode returns nothing serial-specific — POS needs a serial.
+    return undefined;
+  }
+
+  /**
+   * Create a POS sale (retail or dealer channel).
+   * Atomic: re-validates units, then assigns doc number, warranty, and balance.
+   */
+  createPosSale(input: {
+    channel: SaleChannel;
+    customerId: string;
+    soldBy: string;
+    lineItems: {
+      itemUnitId: string;
+      unitPrice: number;
+      lineDiscount?: number;
+      warrantyMonths?: number;
+      warrantyType?: WarrantyType;
+    }[];
+    grossDiscount?: number;
+    taxRate?: number;
+    amountPaid?: number;
+    notes?: string;
+    /** Override "show discount on invoice" for this sale; defaults to settings. */
+    showDiscountOnInvoice?: boolean;
+    /** Test hook — inject a fixed sale timestamp. */
+    now?: Date;
+  }): Sale | { error: string } {
+    if (!input.customerId) return { error: "Customer is required" };
+    const customer = this.customers.find((c) => c.id === input.customerId);
+    if (!customer) return { error: "Customer not found" };
+    if (input.lineItems.length === 0) return { error: "Add at least one item" };
+
+    // Reject duplicate unit ids in one cart.
+    const seen = new Set<string>();
+    for (const li of input.lineItems) {
+      if (seen.has(li.itemUnitId)) return { error: "Same unit added twice" };
+      seen.add(li.itemUnitId);
+    }
+
+    const chosen: SaleLineItem[] = [];
+    for (const li of input.lineItems) {
+      const unit = this.units.find((u) => u.id === li.itemUnitId);
+      if (!unit) return { error: "Unit not found" };
+      if (unit.status !== "in_stock") {
+        return { error: `Invalid or Already Sold: ${unit.serialNumber}` };
+      }
+      const item = this.data.items.find((i) => i.id === unit.itemId);
+      const warrantyMonths = li.warrantyMonths ?? (
+        input.channel === "dealer"
+          ? unit.warrantyMonths // dealer policy carried on the unit / model
+          : (item?.defaultWarrantyMonths ?? unit.warrantyMonths)
+      );
+      chosen.push({
+        id: crypto.randomUUID(),
+        itemUnitId: unit.id,
+        itemId: unit.itemId,
+        serialNumber: unit.serialNumber,
+        unitPrice: li.unitPrice,
+        lineDiscount: Math.max(0, li.lineDiscount ?? 0),
+        warrantyMonths,
+        warrantyType: li.warrantyType ?? "service",
+      });
+    }
+
+    const subtotal = chosen.reduce((s, l) => s + l.unitPrice, 0);
+    const lineDiscountTotal = chosen.reduce((s, l) => s + l.lineDiscount, 0);
+    const grossDiscount = Math.max(0, input.grossDiscount ?? 0);
+    const afterDiscount = Math.max(0, subtotal - lineDiscountTotal - grossDiscount);
+    const tax = Math.round(afterDiscount * (input.taxRate ?? this.salesSettings.defaultTaxRate) * 100) / 100;
+    const total = Math.round((afterDiscount + tax) * 100) / 100;
+    const amountPaid = Math.max(0, input.amountPaid ?? total);
+    const balanceDue = Math.round((total - amountPaid) * 100) / 100;
+
+    const soldDate = input.now ?? new Date();
+    const soldAt = soldDate.toISOString();
+    this.saleCounter++;
+    const documentNumber = this.nextDocumentNumber(input.channel, soldDate);
+
+    const sale: Sale = {
+      id: crypto.randomUUID(),
+      saleNumber: `SALE-${this.saleCounter}`,
+      documentNumber,
+      channel: input.channel,
+      customerId: input.customerId,
+      status: "completed",
+      items: chosen,
+      subtotal,
+      lineDiscountTotal,
+      grossDiscount,
+      tax,
+      total,
+      amountPaid,
+      balanceDue,
+      showDiscountOnInvoice: input.showDiscountOnInvoice ?? this.salesSettings.showDiscountOnInvoice,
+      soldAt,
+      soldBy: input.soldBy,
+      notes: input.notes ?? "",
+      createdAt: soldAt,
+      updatedAt: soldAt,
+    };
+
+    for (const line of chosen) {
+      const idx = this.units.findIndex((u) => u.id === line.itemUnitId);
+      if (idx === -1) continue;
+      let expiryIso: string | null = null;
+      if (input.channel === "retail") {
+        const expiry = new Date(soldDate);
+        expiry.setMonth(expiry.getMonth() + line.warrantyMonths);
+        expiryIso = expiry.toISOString();
+      } else {
+        // Dealer: warranty runs from purchase (unit.receivedAt), not sale date.
+        const base = new Date(this.units[idx].receivedAt);
+        base.setMonth(base.getMonth() + line.warrantyMonths);
+        expiryIso = base.toISOString();
+      }
+      this.units[idx] = {
+        ...this.units[idx],
+        status: "sold",
+        soldAt,
+        warrantyMonths: line.warrantyMonths,
+        warrantyExpiresAt: expiryIso,
+        updatedAt: soldAt,
+      };
+      this.syncSerializedStock(this.units[idx].itemId);
+    }
+
+    // Dealer credit: update balance for unpaid portion.
+    if (input.channel === "dealer" && balanceDue > 0) {
+      const cidx = this.customers.findIndex((c) => c.id === customer.id);
+      if (cidx !== -1) {
+        this.customers[cidx] = {
+          ...this.customers[cidx],
+          balance: Math.round((this.customers[cidx].balance + balanceDue) * 100) / 100,
+          updatedAt: soldAt,
+        };
+      }
+    }
+
+    this.sales.push(sale);
+    this.version++;
+    return sale;
+  }
+
+  /** Legacy simple sale — delegates to POS sale on the retail channel. */
   createSale(input: {
     customerId: string;
     soldBy: string;
@@ -633,69 +804,22 @@ export class DemoStore {
     taxRate?: number;
     notes?: string;
   }): Sale | { error: string } {
-    if (!input.customerId) return { error: "Customer is required" };
-    if (input.lineItems.length === 0) return { error: "Add at least one item" };
-    const chosen: SaleLineItem[] = [];
-    for (const li of input.lineItems) {
-      const unit = this.units.find((u) => u.id === li.itemUnitId);
-      if (!unit) return { error: "Unit not found" };
-      if (unit.status !== "in_stock") return { error: `Serial ${unit.serialNumber} is not available (${unit.status})` };
-      chosen.push({
-        id: crypto.randomUUID(),
-        itemUnitId: unit.id,
-        itemId: unit.itemId,
-        serialNumber: unit.serialNumber,
-        unitPrice: li.unitPrice,
-        warrantyMonths: li.warrantyMonths ?? unit.warrantyMonths,
-      });
-    }
-    const subtotal = chosen.reduce((s, l) => s + l.unitPrice, 0);
-    const tax = Math.round(subtotal * (input.taxRate ?? 0) * 100) / 100;
-    const total = subtotal + tax;
-    const soldAt = new Date().toISOString();
-    this.saleCounter++;
-    const sale: Sale = {
-      id: crypto.randomUUID(),
-      saleNumber: `SALE-${this.saleCounter}`,
+    return this.createPosSale({
+      channel: "retail",
       customerId: input.customerId,
-      status: "completed",
-      items: chosen,
-      subtotal, tax, total,
-      soldAt,
       soldBy: input.soldBy,
-      notes: input.notes ?? "",
-      createdAt: soldAt,
-      updatedAt: soldAt,
-    };
-    // Mark units sold + set warranty
-    const soldDate = new Date(soldAt);
-    for (const line of chosen) {
-      const idx = this.units.findIndex((u) => u.id === line.itemUnitId);
-      if (idx !== -1) {
-        const expiry = new Date(soldDate);
-        expiry.setMonth(expiry.getMonth() + line.warrantyMonths);
-        this.units[idx] = {
-          ...this.units[idx],
-          status: "sold",
-          soldAt,
-          warrantyMonths: line.warrantyMonths,
-          warrantyExpiresAt: expiry.toISOString(),
-          updatedAt: soldAt,
-        };
-        this.syncSerializedStock(this.units[idx].itemId);
-      }
-    }
-    this.sales.push(sale);
-    this.version++;
-    return sale;
+      lineItems: input.lineItems,
+      taxRate: input.taxRate,
+      notes: input.notes,
+    });
   }
 
   refundSale(id: string): Sale | { error: string } {
     const idx = this.sales.findIndex((s) => s.id === id);
     if (idx === -1) return { error: "Sale not found" };
     if (this.sales[idx].status === "refunded") return { error: "Already refunded" };
-    // Return units to stock
-    for (const line of this.sales[idx].items) {
+    const sale = this.sales[idx];
+    for (const line of sale.items) {
       const uidx = this.units.findIndex((u) => u.id === line.itemUnitId);
       if (uidx !== -1) {
         this.units[uidx] = {
@@ -708,8 +832,87 @@ export class DemoStore {
         this.syncSerializedStock(this.units[uidx].itemId);
       }
     }
-    this.sales[idx] = { ...this.sales[idx], status: "refunded", updatedAt: new Date().toISOString() };
+    // Reverse dealer credit if any balance was outstanding.
+    if (sale.channel === "dealer" && sale.balanceDue > 0) {
+      const cidx = this.customers.findIndex((c) => c.id === sale.customerId);
+      if (cidx !== -1) {
+        this.customers[cidx] = {
+          ...this.customers[cidx],
+          balance: Math.round((this.customers[cidx].balance - sale.balanceDue) * 100) / 100,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    }
+    this.sales[idx] = { ...sale, status: "refunded", updatedAt: new Date().toISOString() };
     this.version++;
     return this.sales[idx];
+  }
+
+  // ─── Sales settings ────────────────────────────────────
+  getSalesSettings(): SalesSettings { return { ...this.salesSettings }; }
+  setSalesSettings(updates: Partial<SalesSettings>): SalesSettings {
+    this.salesSettings = { ...this.salesSettings, ...updates };
+    this.version++;
+    return { ...this.salesSettings };
+  }
+
+  // ─── Warranty claims ───────────────────────────────────
+  getWarrantyClaims(filters?: { status?: WarrantyClaimStatus; itemUnitId?: string }): WarrantyClaim[] {
+    let r = this.warrantyClaims;
+    if (filters?.status) r = r.filter((c) => c.status === filters.status);
+    if (filters?.itemUnitId) r = r.filter((c) => c.itemUnitId === filters.itemUnitId);
+    return [...r].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  createWarrantyClaim(input: {
+    itemUnitId: string;
+    claimType: WarrantyType;
+    notes?: string;
+  }): WarrantyClaim | { error: string } {
+    const unit = this.units.find((u) => u.id === input.itemUnitId);
+    if (!unit) return { error: "Serial not found" };
+    if (unit.status !== "sold" && unit.status !== "warranty_service") {
+      return { error: "Warranty claims are only valid on sold units" };
+    }
+    const sale = this.sales.find((s) => s.items.some((li) => li.itemUnitId === unit.id));
+    const now = new Date().toISOString();
+    const claim: WarrantyClaim = {
+      id: crypto.randomUUID(),
+      itemUnitId: unit.id,
+      saleId: sale?.id ?? null,
+      claimType: input.claimType,
+      status: "pending",
+      notes: input.notes ?? "",
+      createdAt: now,
+      updatedAt: now,
+      resolvedAt: null,
+    };
+    this.warrantyClaims.push(claim);
+    this.version++;
+    return claim;
+  }
+
+  updateWarrantyClaim(id: string, status: WarrantyClaimStatus, notes?: string): WarrantyClaim | { error: string } {
+    const idx = this.warrantyClaims.findIndex((c) => c.id === id);
+    if (idx === -1) return { error: "Claim not found" };
+    const claim = this.warrantyClaims[idx];
+    const now = new Date().toISOString();
+    const uidx = this.units.findIndex((u) => u.id === claim.itemUnitId);
+    if (uidx !== -1) {
+      if (status === "in_progress" && this.units[uidx].status === "sold") {
+        this.units[uidx] = { ...this.units[uidx], status: "warranty_service", updatedAt: now };
+      } else if ((status === "resolved" || status === "rejected") && this.units[uidx].status === "warranty_service") {
+        this.units[uidx] = { ...this.units[uidx], status: "sold", updatedAt: now };
+      }
+    }
+    this.warrantyClaims[idx] = {
+      ...claim,
+      status,
+      notes: notes ?? claim.notes,
+      updatedAt: now,
+      resolvedAt: status === "resolved" || status === "rejected" ? now : null,
+    };
+    this.version++;
+    return this.warrantyClaims[idx];
   }
 }
