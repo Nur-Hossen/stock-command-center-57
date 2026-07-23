@@ -116,6 +116,17 @@ function CustomersPage() {
           <SheetTitle>{editing ? "Edit Customer" : "New Customer"}</SheetTitle>
           <div className="mt-6 space-y-3">
             <div><label className="text-sm font-medium">Name *</label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+            <div>
+              <label className="text-sm font-medium">Type *</label>
+              <div className="mt-1 flex gap-2">
+                {(["retail", "dealer"] as const).map((t) => (
+                  <button key={t} type="button"
+                    className={`flex-1 rounded-md border px-3 py-2 text-sm capitalize ${form.type === t ? "border-primary bg-primary/10" : "border-border"}`}
+                    onClick={() => setForm({ ...form, type: t })}
+                  >{t}</button>
+                ))}
+              </div>
+            </div>
             <div><label className="text-sm font-medium">Email</label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div><label className="text-sm font-medium">Phone</label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
             <div><label className="text-sm font-medium">Address</label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
