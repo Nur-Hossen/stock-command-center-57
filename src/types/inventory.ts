@@ -119,6 +119,8 @@ export interface ItemUnit {
   updatedAt: string;
 }
 
+export type CustomerType = "retail" | "dealer";
+
 export interface Customer {
   id: string;
   name: string;
@@ -126,11 +128,17 @@ export interface Customer {
   phone: string;
   address: string;
   notes: string;
+  /** retail = walk-in end user; dealer = wholesale account with credit. */
+  type: CustomerType;
+  /** Outstanding accounts-receivable balance (dealer credit). Positive = owes us. */
+  balance: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export type SaleStatus = "draft" | "completed" | "refunded";
+export type SaleChannel = "retail" | "dealer";
+export type WarrantyType = "service" | "replacement";
 
 export interface SaleLineItem {
   id: string;
@@ -138,23 +146,60 @@ export interface SaleLineItem {
   itemId: string;
   serialNumber: string;
   unitPrice: number;
+  /** Per-line discount in currency (subtracted from unitPrice). */
+  lineDiscount: number;
   warrantyMonths: number;
+  warrantyType: WarrantyType;
 }
 
 export interface Sale {
   id: string;
   saleNumber: string;
+  /** Retail = INV-YYYY-NNNN. Dealer = DC-YYYY-NNNN (Delivery Challan). */
+  documentNumber: string;
+  channel: SaleChannel;
   customerId: string;
   status: SaleStatus;
   items: SaleLineItem[];
   subtotal: number;
+  lineDiscountTotal: number;
+  /** Additional gross (invoice-level) discount amount. */
+  grossDiscount: number;
   tax: number;
   total: number;
+  amountPaid: number;
+  /** total - amountPaid; positive = customer owes. */
+  balanceDue: number;
+  /** Snapshot of the "print discount on invoice" flag at time of sale. */
+  showDiscountOnInvoice: boolean;
   soldAt: string;
   soldBy: string;
   notes: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type WarrantyClaimStatus = "pending" | "in_progress" | "resolved" | "rejected";
+
+export interface WarrantyClaim {
+  id: string;
+  itemUnitId: string;
+  saleId: string | null;
+  claimType: WarrantyType;
+  status: WarrantyClaimStatus;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+}
+
+export interface SalesSettings {
+  /** Show discount column on printed invoices. */
+  showDiscountOnInvoice: boolean;
+  /** Default tax rate (e.g. 0.05 = 5%). */
+  defaultTaxRate: number;
+  /** Business name printed on invoices. */
+  businessName: string;
 }
 
 export type LocationType = "warehouse" | "zone" | "aisle" | "shelf" | "bin";

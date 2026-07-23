@@ -54,8 +54,16 @@ const navGroups: NavGroup[] = [
   {
     label: "Sales",
     items: [
+      { label: "POS", href: "/app/pos", icon: Receipt },
       { label: "Customers", href: "/app/customers", icon: UsersIcon },
       { label: "Sales", href: "/app/sales", icon: Receipt },
+    ],
+  },
+  {
+    label: "Warranty",
+    items: [
+      { label: "Warranty check", href: "/app/warranty", icon: Receipt },
+      { label: "Claims", href: "/app/warranty/claims", icon: Receipt },
     ],
   },
   {
