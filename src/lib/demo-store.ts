@@ -73,13 +73,13 @@ function seedBrands(): Brand[] {
 
 function seedCustomers(): Customer[] {
   const now = new Date().toISOString();
-  const mk = (id: string, name: string, email: string, phone: string): Customer => ({
-    id, name, email, phone, address: "", notes: "", createdAt: now, updatedAt: now,
+  const mk = (id: string, name: string, email: string, phone: string, type: "retail" | "dealer"): Customer => ({
+    id, name, email, phone, address: "", notes: "", type, balance: 0, createdAt: now, updatedAt: now,
   });
   return [
-    mk("cust-001", "Acme Corp", "buyer@acme.example", "+1-555-0101"),
-    mk("cust-002", "Beacon Retail", "orders@beacon.example", "+1-555-0202"),
-    mk("cust-003", "Walk-in Customer", "", ""),
+    mk("cust-001", "Acme Corp", "buyer@acme.example", "+1-555-0101", "dealer"),
+    mk("cust-002", "Beacon Retail", "orders@beacon.example", "+1-555-0202", "dealer"),
+    mk("cust-003", "Walk-in Customer", "", "", "retail"),
   ];
 }
 
