@@ -83,6 +83,36 @@ function seedCustomers(): Customer[] {
   ];
 }
 
+function seedUnitsFor(items: Item[]): ItemUnit[] {
+  const now = new Date().toISOString();
+  const units: ItemUnit[] = [];
+  const eligible = items.filter((i) => i.trackSerials);
+  const targets = eligible.length > 0 ? eligible : items.slice(0, 6);
+  for (const item of targets) {
+    const count = Math.min(3, Math.max(1, Math.floor((item.currentStock ?? 3) / 2) || 3));
+    const prefix = (item.sku || item.name.slice(0, 3)).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "SN";
+    for (let i = 1; i <= count; i++) {
+      const serial = `${prefix}-${String(i).padStart(4, "0")}`;
+      units.push({
+        id: `unit-${item.id}-${i}`,
+        itemId: item.id,
+        serialNumber: serial,
+        status: "in_stock",
+        locationId: null,
+        receivedAt: now,
+        soldAt: null,
+        warrantyMonths: 12,
+        warrantyExpiresAt: null,
+        cost: item.costPrice ?? 0,
+        notes: "",
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+  return units;
+}
+
 const DEFAULT_SALES_SETTINGS: SalesSettings = {
   showDiscountOnInvoice: true,
   defaultTaxRate: 0,
@@ -106,6 +136,7 @@ export class DemoStore {
 
   constructor() {
     this.data = generateSeedData();
+    this.units = seedUnitsFor(this.data.items);
   }
 
   getVersion() {
@@ -117,7 +148,7 @@ export class DemoStore {
     this.users = SEED_USERS.map((u) => ({ ...u }));
     this.roles = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
     this.brands = seedBrands();
-    this.units = [];
+    this.units = seedUnitsFor(this.data.items);
     this.customers = seedCustomers();
     this.sales = [];
     this.saleCounter = 1000;

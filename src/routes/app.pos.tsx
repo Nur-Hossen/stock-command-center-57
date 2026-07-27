@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useCustomers, useItems } from "@/hooks/useInventoryData";
+import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import type { Sale, SaleChannel } from "@/types/inventory";
@@ -39,6 +39,7 @@ function PosPage() {
   const { can } = usePermissions();
   const { data: customers } = useCustomers();
   const { data: items } = useItems();
+  const { data: allUnits } = useUnits();
   const findUnit = useUnitByScan();
   const createSale = useCreatePosSale();
   const settings = useSalesSettings();
@@ -68,12 +69,25 @@ function PosPage() {
   const tax = Math.round(afterDiscount * settings.defaultTaxRate * 100) / 100;
   const total = Math.round((afterDiscount + tax) * 100) / 100;
 
-  const handleScan = () => {
-    const code = scan.trim();
-    if (!code) return;
-    const unit = findUnit(code);
-    if (!unit) { toast.error(`Invalid or Already Sold: ${code}`); setScan(""); return; }
-    if (unit.status !== "in_stock") { toast.error(`Invalid or Already Sold: ${code}`); setScan(""); return; }
+  const suggestions = useMemo(() => {
+    const q = scan.trim().toLowerCase();
+    if (!q) return [];
+    const inCart = new Set(cart.map((l) => l.itemUnitId));
+    return allUnits
+      .filter((u) => u.status === "in_stock" && !inCart.has(u.id))
+      .map((u) => ({ unit: u, item: itemById.get(u.itemId) }))
+      .filter(({ unit, item }) =>
+        unit.serialNumber.toLowerCase().includes(q) ||
+        item?.name.toLowerCase().includes(q) ||
+        item?.sku.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [scan, allUnits, itemById, cart]);
+
+  const addUnitToCart = (unitId: string) => {
+    const unit = allUnits.find((u) => u.id === unitId);
+    if (!unit) { toast.error(`Invalid or Already Sold: ${scan}`); setScan(""); return; }
+    if (unit.status !== "in_stock") { toast.error(`Invalid or Already Sold: ${unit.serialNumber}`); setScan(""); return; }
     if (cart.some((l) => l.itemUnitId === unit.id)) { toast.error("Already in cart"); setScan(""); return; }
     const item = itemById.get(unit.itemId);
     setCart([...cart, {
@@ -86,6 +100,16 @@ function PosPage() {
     }]);
     setScan("");
     scanRef.current?.focus();
+  };
+
+  const handleScan = () => {
+    const code = scan.trim();
+    if (!code) return;
+    const unit = findUnit(code);
+    if (unit) { addUnitToCart(unit.id); return; }
+    if (suggestions.length === 1) { addUnitToCart(suggestions[0].unit.id); return; }
+    toast.error(`Invalid or Already Sold: ${code}`);
+    setScan("");
   };
 
   const removeLine = (id: string) => setCart(cart.filter((l) => l.itemUnitId !== id));
@@ -171,16 +195,35 @@ function PosPage() {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <ScanLine className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input ref={scanRef} autoFocus placeholder="Scan or type serial number, then Enter"
+            <Input ref={scanRef} autoFocus placeholder="Scan serial, or search by item name / SKU / serial"
               className="pl-8"
               value={scan}
               onChange={(e) => setScan(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScan(); } }}
             />
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-md border border-border bg-popover shadow-lg">
+                {suggestions.map(({ unit, item }) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    className="flex w-full items-center justify-between gap-2 border-b border-border px-3 py-2 text-left text-sm hover:bg-accent last:border-0"
+                    onClick={() => addUnitToCart(unit.id)}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{item?.name ?? "Item"}</div>
+                      <div className="font-mono text-xs text-muted-foreground">{unit.serialNumber}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">${(item?.sellingPrice ?? 0).toFixed(2)}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <Button onClick={handleScan}>Add</Button>
         </div>
       </div>
+
 
       <div className="rounded-lg border border-border">
         <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
