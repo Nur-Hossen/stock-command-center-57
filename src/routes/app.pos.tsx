@@ -195,16 +195,35 @@ function PosPage() {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <ScanLine className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input ref={scanRef} autoFocus placeholder="Scan or type serial number, then Enter"
+            <Input ref={scanRef} autoFocus placeholder="Scan serial, or search by item name / SKU / serial"
               className="pl-8"
               value={scan}
               onChange={(e) => setScan(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScan(); } }}
             />
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-md border border-border bg-popover shadow-lg">
+                {suggestions.map(({ unit, item }) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    className="flex w-full items-center justify-between gap-2 border-b border-border px-3 py-2 text-left text-sm hover:bg-accent last:border-0"
+                    onClick={() => addUnitToCart(unit.id)}
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{item?.name ?? "Item"}</div>
+                      <div className="font-mono text-xs text-muted-foreground">{unit.serialNumber}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">${(item?.sellingPrice ?? 0).toFixed(2)}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <Button onClick={handleScan}>Add</Button>
         </div>
       </div>
+
 
       <div className="rounded-lg border border-border">
         <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
