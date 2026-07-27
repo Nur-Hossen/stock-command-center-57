@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useCustomers, useItems } from "@/hooks/useInventoryData";
+import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import type { Sale, SaleChannel } from "@/types/inventory";
