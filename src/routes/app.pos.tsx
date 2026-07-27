@@ -39,6 +39,7 @@ function PosPage() {
   const { can } = usePermissions();
   const { data: customers } = useCustomers();
   const { data: items } = useItems();
+  const { data: allUnits } = useUnits();
   const findUnit = useUnitByScan();
   const createSale = useCreatePosSale();
   const settings = useSalesSettings();
