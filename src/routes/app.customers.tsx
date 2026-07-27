@@ -12,7 +12,7 @@ import {
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CustomersTable } from "@/components/customers/CustomersTable";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useCustomers, useSales } from "@/hooks/useInventoryData";
+import { useCustomers } from "@/hooks/useInventoryData";
 import { useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from "@/hooks/useInventoryMutations";
 import type { Customer } from "@/types/inventory";
 
