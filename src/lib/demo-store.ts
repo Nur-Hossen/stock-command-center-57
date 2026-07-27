@@ -106,6 +106,7 @@ export class DemoStore {
 
   constructor() {
     this.data = generateSeedData();
+    this.units = seedUnitsFor(this.data.items);
   }
 
   getVersion() {
@@ -117,7 +118,7 @@ export class DemoStore {
     this.users = SEED_USERS.map((u) => ({ ...u }));
     this.roles = BUILTIN_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
     this.brands = seedBrands();
-    this.units = [];
+    this.units = seedUnitsFor(this.data.items);
     this.customers = seedCustomers();
     this.sales = [];
     this.saleCounter = 1000;
