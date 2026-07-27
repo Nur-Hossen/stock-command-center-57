@@ -24,7 +24,6 @@ export const Route = createFileRoute("/app/customers")({
 function CustomersPage() {
   const { can } = usePermissions();
   const { data: customers } = useCustomers();
-  const { data: sales } = useSales();
   const createC = useCreateCustomer();
   const updateC = useUpdateCustomer();
   const deleteC = useDeleteCustomer();
