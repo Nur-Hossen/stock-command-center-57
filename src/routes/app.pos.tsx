@@ -69,12 +69,25 @@ function PosPage() {
   const tax = Math.round(afterDiscount * settings.defaultTaxRate * 100) / 100;
   const total = Math.round((afterDiscount + tax) * 100) / 100;
 
-  const handleScan = () => {
-    const code = scan.trim();
-    if (!code) return;
-    const unit = findUnit(code);
-    if (!unit) { toast.error(`Invalid or Already Sold: ${code}`); setScan(""); return; }
-    if (unit.status !== "in_stock") { toast.error(`Invalid or Already Sold: ${code}`); setScan(""); return; }
+  const suggestions = useMemo(() => {
+    const q = scan.trim().toLowerCase();
+    if (!q) return [];
+    const inCart = new Set(cart.map((l) => l.itemUnitId));
+    return allUnits
+      .filter((u) => u.status === "in_stock" && !inCart.has(u.id))
+      .map((u) => ({ unit: u, item: itemById.get(u.itemId) }))
+      .filter(({ unit, item }) =>
+        unit.serialNumber.toLowerCase().includes(q) ||
+        item?.name.toLowerCase().includes(q) ||
+        item?.sku.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [scan, allUnits, itemById, cart]);
+
+  const addUnitToCart = (unitId: string) => {
+    const unit = allUnits.find((u) => u.id === unitId);
+    if (!unit) { toast.error(`Invalid or Already Sold: ${scan}`); setScan(""); return; }
+    if (unit.status !== "in_stock") { toast.error(`Invalid or Already Sold: ${unit.serialNumber}`); setScan(""); return; }
     if (cart.some((l) => l.itemUnitId === unit.id)) { toast.error("Already in cart"); setScan(""); return; }
     const item = itemById.get(unit.itemId);
     setCart([...cart, {
@@ -87,6 +100,16 @@ function PosPage() {
     }]);
     setScan("");
     scanRef.current?.focus();
+  };
+
+  const handleScan = () => {
+    const code = scan.trim();
+    if (!code) return;
+    const unit = findUnit(code);
+    if (unit) { addUnitToCart(unit.id); return; }
+    if (suggestions.length === 1) { addUnitToCart(suggestions[0].unit.id); return; }
+    toast.error(`Invalid or Already Sold: ${code}`);
+    setScan("");
   };
 
   const removeLine = (id: string) => setCart(cart.filter((l) => l.itemUnitId !== id));
