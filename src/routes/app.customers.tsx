@@ -59,9 +59,6 @@ function CustomersPage() {
 
   const canManage = can("manage_customers");
 
-  const salesCount = new Map<string, number>();
-  sales.forEach((s) => salesCount.set(s.customerId, (salesCount.get(s.customerId) ?? 0) + 1));
-
   function openCreate() {
     setEditing(null);
     setSheetOpen(true);
