@@ -179,6 +179,10 @@ function AnalyticsPage() {
           </Collapsible>
         </TabsContent>
 
+        <TabsContent value="sales" className="space-y-6 mt-4">
+          <ErrorBoundary><SalesInsights title="Sales overview" /></ErrorBoundary>
+        </TabsContent>
+
         <TabsContent value="suppliers" className="space-y-6 mt-4">
           <ErrorBoundary>
             <Card>
