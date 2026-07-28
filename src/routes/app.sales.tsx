@@ -61,12 +61,12 @@ function SalesPage() {
     <div className="mx-auto max-w-[1100px] space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Sales</h1>
-          <p className="text-sm text-muted-foreground">{sales.length} sale{sales.length !== 1 && "s"}</p>
+          <h1 className="text-2xl font-semibold">Sales orders</h1>
+          <p className="text-sm text-muted-foreground">{sales.length} order{sales.length !== 1 && "s"}</p>
         </div>
         {canManage && (
-          <Button onClick={() => setOpen(true)} disabled={inStockUnits.length === 0}>
-            <Plus className="mr-1.5 h-4 w-4" /> New Sale
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-1.5 h-4 w-4" /> New sales order
           </Button>
         )}
       </div>
