@@ -21,6 +21,7 @@ import { SupplierScoreCards, computeMetrics } from "@/components/analytics/Suppl
 import { SpendBySupplierChart } from "@/components/analytics/SpendBySupplierChart";
 import { CostByCategoryChart } from "@/components/analytics/CostByCategoryChart";
 import { CostTrendChart } from "@/components/analytics/CostTrendChart";
+import { SalesInsights } from "@/components/dashboard/SalesInsights";
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
