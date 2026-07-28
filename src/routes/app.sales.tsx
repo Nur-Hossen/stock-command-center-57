@@ -119,7 +119,12 @@ function SalesPage() {
 
       <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>
         <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
-          <SheetTitle>New Sale</SheetTitle>
+          <SheetTitle>New sales order</SheetTitle>
+          {inStockUnits.length === 0 && (
+            <p className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-200">
+              No serialized units in stock. Receive a purchase order or reset the demo data (Settings → System) to add stock.
+            </p>
+          )}
           <div className="mt-6 space-y-4">
             <div>
               <label className="text-sm font-medium">Customer *</label>
