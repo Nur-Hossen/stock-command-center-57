@@ -17,7 +17,7 @@ import { useDemo } from "@/hooks/useDemo";
 
 export const Route = createFileRoute("/app/sales")({
   component: SalesPage,
-  head: () => ({ meta: [{ title: "Sales — Stackwise" }] }),
+  head: () => ({ meta: [{ title: "Sales orders — Stackwise" }] }),
 });
 
 function SalesPage() {
