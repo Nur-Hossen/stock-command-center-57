@@ -7,6 +7,7 @@ import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { DashboardReorderSection } from "@/components/insights/DashboardReorderSection";
 import { DashboardAnomalySection } from "@/components/insights/DashboardAnomalySection";
+import { SalesInsights } from "@/components/dashboard/SalesInsights";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 
 import { useStockSummary } from "@/hooks/useInventoryData";
@@ -73,6 +74,8 @@ function DashboardPage() {
         <div data-tour="needs-attention" className="min-h-0"><NeedsAttention /></div>
         <div className="min-h-0"><RecentActivity /></div>
       </div>
+
+      <SalesInsights />
 
       <DashboardAnomalySection movements={movements} items={items} />
       <DashboardReorderSection items={items} movements={movements} suppliers={suppliers} />

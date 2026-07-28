@@ -17,7 +17,7 @@ import { useDemo } from "@/hooks/useDemo";
 
 export const Route = createFileRoute("/app/sales")({
   component: SalesPage,
-  head: () => ({ meta: [{ title: "Sales — Stackwise" }] }),
+  head: () => ({ meta: [{ title: "Sales orders — Stackwise" }] }),
 });
 
 function SalesPage() {
@@ -61,12 +61,12 @@ function SalesPage() {
     <div className="mx-auto max-w-[1100px] space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Sales</h1>
-          <p className="text-sm text-muted-foreground">{sales.length} sale{sales.length !== 1 && "s"}</p>
+          <h1 className="text-2xl font-semibold">Sales orders</h1>
+          <p className="text-sm text-muted-foreground">{sales.length} order{sales.length !== 1 && "s"}</p>
         </div>
         {canManage && (
-          <Button onClick={() => setOpen(true)} disabled={inStockUnits.length === 0}>
-            <Plus className="mr-1.5 h-4 w-4" /> New Sale
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-1.5 h-4 w-4" /> New sales order
           </Button>
         )}
       </div>
@@ -119,7 +119,12 @@ function SalesPage() {
 
       <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>
         <SheetContent className="w-full sm:max-w-[520px] overflow-y-auto">
-          <SheetTitle>New Sale</SheetTitle>
+          <SheetTitle>New sales order</SheetTitle>
+          {inStockUnits.length === 0 && (
+            <p className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-200">
+              No serialized units in stock. Receive a purchase order or reset the demo data (Settings → System) to add stock.
+            </p>
+          )}
           <div className="mt-6 space-y-4">
             <div>
               <label className="text-sm font-medium">Customer *</label>

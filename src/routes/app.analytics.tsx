@@ -21,6 +21,7 @@ import { SupplierScoreCards, computeMetrics } from "@/components/analytics/Suppl
 import { SpendBySupplierChart } from "@/components/analytics/SpendBySupplierChart";
 import { CostByCategoryChart } from "@/components/analytics/CostByCategoryChart";
 import { CostTrendChart } from "@/components/analytics/CostTrendChart";
+import { SalesInsights } from "@/components/dashboard/SalesInsights";
 
 export const Route = createFileRoute("/app/analytics")({
   component: AnalyticsPage,
@@ -110,6 +111,7 @@ function AnalyticsPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="stock">Stock Overview</TabsTrigger>
+          <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
         </TabsList>
 
@@ -175,6 +177,10 @@ function AnalyticsPage() {
               </CollapsibleContent>
             </Card>
           </Collapsible>
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-6 mt-4">
+          <ErrorBoundary><SalesInsights title="Sales overview" /></ErrorBoundary>
         </TabsContent>
 
         <TabsContent value="suppliers" className="space-y-6 mt-4">
