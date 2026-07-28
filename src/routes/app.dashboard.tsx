@@ -7,6 +7,7 @@ import { NeedsAttention } from "@/components/dashboard/NeedsAttention";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { DashboardReorderSection } from "@/components/insights/DashboardReorderSection";
 import { DashboardAnomalySection } from "@/components/insights/DashboardAnomalySection";
+import { SalesInsights } from "@/components/dashboard/SalesInsights";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 
 import { useStockSummary } from "@/hooks/useInventoryData";
