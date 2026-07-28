@@ -75,6 +75,8 @@ function DashboardPage() {
         <div className="min-h-0"><RecentActivity /></div>
       </div>
 
+      <SalesInsights />
+
       <DashboardAnomalySection movements={movements} items={items} />
       <DashboardReorderSection items={items} movements={movements} suppliers={suppliers} />
 
