@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, ScanLine, Printer } from "lucide-react";
+import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
+import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
 import type { Sale, SaleChannel } from "@/types/inventory";
 
 export const Route = createFileRoute("/app/pos")({
