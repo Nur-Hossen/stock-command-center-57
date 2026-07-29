@@ -203,6 +203,12 @@ function SalesPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <QuickCustomerDialog
+        open={newCustomerOpen}
+        onOpenChange={setNewCustomerOpen}
+        onCreated={(c) => setCustomerId(c.id)}
+      />
     </div>
   );
 }
