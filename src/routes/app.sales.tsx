@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Receipt, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useSales, useUnits, useItems } from "@/hooks/useInventoryData";
 import { useCreateSale, useRefundSale } from "@/hooks/useInventoryMutations";
