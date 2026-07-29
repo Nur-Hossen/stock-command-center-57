@@ -189,18 +189,27 @@ function PosPage() {
               >{c}</button>
             ))}
           </div>
-          <div className="min-w-[220px] flex-1">
+          <div className="flex min-w-[220px] flex-1 gap-2">
             <Select value={customerId} onValueChange={setCustomerId}>
               <SelectTrigger><SelectValue placeholder={`Select ${channel} customer`} /></SelectTrigger>
               <SelectContent>
                 {filteredCustomers.length === 0 && <div className="p-2 text-xs text-muted-foreground">No {channel} customers</div>}
                 {filteredCustomers.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
+                    {c.name}{c.phone ? ` · ${c.phone}` : ""}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              title="Add new customer"
+              onClick={() => setNewCustomerOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
