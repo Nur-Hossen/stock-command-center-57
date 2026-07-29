@@ -35,14 +35,31 @@ function SalesPage() {
   const [customerId, setCustomerId] = useState("");
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
 
   const canManage = can("manage_sales");
 
   const inStockUnits = useMemo(() => units.filter((u) => u.status === "in_stock"), [units]);
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const customerById = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers]);
+  const sortedCustomers = useMemo(
+    () =>
+      [...customers].sort((a, b) =>
+        a.type === b.type ? a.phone.localeCompare(b.phone) : a.type.localeCompare(b.type),
+      ),
+    [customers],
+  );
 
-  const resetForm = () => { setCustomerId(""); setSelectedUnitIds([]); setUnitPrices({}); };
+  const walkInId = useMemo(
+    () => customers.find((c) => c.name.toLowerCase().includes("walk-in"))?.id ?? "",
+    [customers],
+  );
+
+  useEffect(() => {
+    if (open && !customerId && walkInId) setCustomerId(walkInId);
+  }, [open, customerId, walkInId]);
+
+  const resetForm = () => { setCustomerId(walkInId); setSelectedUnitIds([]); setUnitPrices({}); };
 
   const submit = () => {
     createSale.mutate({
