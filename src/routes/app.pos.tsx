@@ -53,14 +53,25 @@ function PosPage() {
   const [amountPaid, setAmountPaid] = useState<number | "">("");
   const [notes, setNotes] = useState("");
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
   const nextDoc = usePeekDocumentNumber(channel);
 
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const filteredCustomers = useMemo(
-    () => customers.filter((c) => c.type === channel),
+    () =>
+      customers
+        .filter((c) => c.type === channel)
+        .sort((a, b) => (a.type === b.type ? a.phone.localeCompare(b.phone) : a.type.localeCompare(b.type))),
     [customers, channel],
   );
+
+  // Default-select Walk-in Customer (or first retail) when channel changes and nothing chosen.
+  useEffect(() => {
+    if (customerId && filteredCustomers.some((c) => c.id === customerId)) return;
+    const walkIn = filteredCustomers.find((c) => c.name.toLowerCase().includes("walk-in"));
+    setCustomerId(walkIn?.id ?? filteredCustomers[0]?.id ?? "");
+  }, [filteredCustomers, customerId]);
 
   const canDiscount = can("apply_discount");
 
