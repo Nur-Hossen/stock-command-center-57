@@ -316,6 +316,16 @@ function PosPage() {
           </Button>
         </div>
       </div>
+
+      <QuickCustomerDialog
+        open={newCustomerOpen}
+        onOpenChange={setNewCustomerOpen}
+        defaultType={channel}
+        onCreated={(c) => {
+          if (c.type !== channel) setChannel(c.type);
+          setCustomerId(c.id);
+        }}
+      />
     </div>
   );
 }
