@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, ScanLine, Printer } from "lucide-react";
+import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
+import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
 import type { Sale, SaleChannel } from "@/types/inventory";
 
 export const Route = createFileRoute("/app/pos")({
@@ -52,14 +53,25 @@ function PosPage() {
   const [amountPaid, setAmountPaid] = useState<number | "">("");
   const [notes, setNotes] = useState("");
   const [lastSale, setLastSale] = useState<Sale | null>(null);
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
   const nextDoc = usePeekDocumentNumber(channel);
 
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const filteredCustomers = useMemo(
-    () => customers.filter((c) => c.type === channel),
+    () =>
+      customers
+        .filter((c) => c.type === channel)
+        .sort((a, b) => (a.type === b.type ? a.phone.localeCompare(b.phone) : a.type.localeCompare(b.type))),
     [customers, channel],
   );
+
+  // Default-select Walk-in Customer (or first retail) when channel changes and nothing chosen.
+  useEffect(() => {
+    if (customerId && filteredCustomers.some((c) => c.id === customerId)) return;
+    const walkIn = filteredCustomers.find((c) => c.name.toLowerCase().includes("walk-in"));
+    setCustomerId(walkIn?.id ?? filteredCustomers[0]?.id ?? "");
+  }, [filteredCustomers, customerId]);
 
   const canDiscount = can("apply_discount");
 
@@ -177,18 +189,27 @@ function PosPage() {
               >{c}</button>
             ))}
           </div>
-          <div className="min-w-[220px] flex-1">
+          <div className="flex min-w-[220px] flex-1 gap-2">
             <Select value={customerId} onValueChange={setCustomerId}>
               <SelectTrigger><SelectValue placeholder={`Select ${channel} customer`} /></SelectTrigger>
               <SelectContent>
                 {filteredCustomers.length === 0 && <div className="p-2 text-xs text-muted-foreground">No {channel} customers</div>}
                 {filteredCustomers.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
+                    {c.name}{c.phone ? ` · ${c.phone}` : ""}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              title="Add new customer"
+              onClick={() => setNewCustomerOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -295,6 +316,16 @@ function PosPage() {
           </Button>
         </div>
       </div>
+
+      <QuickCustomerDialog
+        open={newCustomerOpen}
+        onOpenChange={setNewCustomerOpen}
+        defaultType={channel}
+        onCreated={(c) => {
+          if (c.type !== channel) setChannel(c.type);
+          setCustomerId(c.id);
+        }}
+      />
     </div>
   );
 }

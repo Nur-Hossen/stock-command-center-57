@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Receipt, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useSales, useUnits, useItems } from "@/hooks/useInventoryData";
 import { useCreateSale, useRefundSale } from "@/hooks/useInventoryMutations";
@@ -34,14 +35,31 @@ function SalesPage() {
   const [customerId, setCustomerId] = useState("");
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
 
   const canManage = can("manage_sales");
 
   const inStockUnits = useMemo(() => units.filter((u) => u.status === "in_stock"), [units]);
   const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const customerById = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers]);
+  const sortedCustomers = useMemo(
+    () =>
+      [...customers].sort((a, b) =>
+        a.type === b.type ? a.phone.localeCompare(b.phone) : a.type.localeCompare(b.type),
+      ),
+    [customers],
+  );
 
-  const resetForm = () => { setCustomerId(""); setSelectedUnitIds([]); setUnitPrices({}); };
+  const walkInId = useMemo(
+    () => customers.find((c) => c.name.toLowerCase().includes("walk-in"))?.id ?? "",
+    [customers],
+  );
+
+  useEffect(() => {
+    if (open && !customerId && walkInId) setCustomerId(walkInId);
+  }, [open, customerId, walkInId]);
+
+  const resetForm = () => { setCustomerId(walkInId); setSelectedUnitIds([]); setUnitPrices({}); };
 
   const submit = () => {
     createSale.mutate({
@@ -128,12 +146,27 @@ function SalesPage() {
           <div className="mt-6 space-y-4">
             <div>
               <label className="text-sm font-medium">Customer *</label>
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={customerId} onValueChange={setCustomerId}>
+                  <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
+                  <SelectContent>
+                    {sortedCustomers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}{c.phone ? ` · ${c.phone}` : ""} — {c.type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  title="Add new customer"
+                  onClick={() => setNewCustomerOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium">Select units to sell</label>
@@ -170,6 +203,12 @@ function SalesPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <QuickCustomerDialog
+        open={newCustomerOpen}
+        onOpenChange={setNewCustomerOpen}
+        onCreated={(c) => setCustomerId(c.id)}
+      />
     </div>
   );
 }
