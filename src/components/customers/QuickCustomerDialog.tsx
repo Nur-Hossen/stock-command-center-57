@@ -31,7 +31,7 @@ export function QuickCustomerDialog({
   }, [open, defaultType]);
 
   const handleSave = () => {
-    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    if (!form.phone.trim()) { toast.error("Phone is required"); return; }
     const now = new Date().toISOString();
     const customer: Customer = {
       id: crypto.randomUUID(),
