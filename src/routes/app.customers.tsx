@@ -70,8 +70,8 @@ function CustomersPage() {
   }
 
   function handleSave() {
-    if (!form.name.trim()) {
-      toast.error("Name is required");
+    if (!form.phone.trim()) {
+      toast.error("Phone is required");
       return;
     }
     if (editing) {
