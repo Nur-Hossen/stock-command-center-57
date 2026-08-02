@@ -31,7 +31,7 @@ export function QuickCustomerDialog({
   }, [open, defaultType]);
 
   const handleSave = () => {
-    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    if (!form.phone.trim()) { toast.error("Phone is required"); return; }
     const now = new Date().toISOString();
     const customer: Customer = {
       id: crypto.randomUUID(),
@@ -58,10 +58,6 @@ export function QuickCustomerDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium">Name *</label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
-          </div>
-          <div>
             <label className="text-sm font-medium">Type *</label>
             <div className="mt-1 flex gap-2">
               {(["retail", "dealer"] as const).map((t) => (
@@ -75,8 +71,12 @@ export function QuickCustomerDialog({
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium">Phone</label>
-            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <label className="text-sm font-medium">Phone *</label>
+            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} autoFocus />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Name</label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
             <label className="text-sm font-medium">Email</label>

@@ -70,8 +70,8 @@ function CustomersPage() {
   }
 
   function handleSave() {
-    if (!form.name.trim()) {
-      toast.error("Name is required");
+    if (!form.phone.trim()) {
+      toast.error("Phone is required");
       return;
     }
     if (editing) {
@@ -155,13 +155,6 @@ function CustomersPage() {
           <SheetTitle>{editing ? "Edit Customer" : "New Customer"}</SheetTitle>
           <div className="mt-6 space-y-3">
             <div>
-              <label className="text-sm font-medium">Name *</label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div>
               <label className="text-sm font-medium">Type *</label>
               <div className="mt-1 flex gap-2">
                 {(["retail", "dealer"] as const).map((t) => (
@@ -181,18 +174,26 @@ function CustomersPage() {
               </div>
             </div>
             <div>
+              <label className="text-sm font-medium">Phone *</label>
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium">Email</label>
               <Input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Phone</label>
-              <Input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div>
