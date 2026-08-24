@@ -251,6 +251,8 @@ export interface PurchaseOrderItem {
   quantityOrdered: number;
   quantityReceived: number;
   unitCost: number;
+  /** Serial numbers received for this line (serialized items only). */
+  receivedSerials?: string[];
 }
 
 export interface PurchaseOrder {
