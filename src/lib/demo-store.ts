@@ -89,7 +89,11 @@ function seedUnitsFor(items: Item[]): ItemUnit[] {
   const eligible = items.filter((i) => i.trackSerials);
   const targets = eligible.length > 0 ? eligible : items.slice(0, 6);
   for (const item of targets) {
-    const count = Math.min(3, Math.max(1, Math.floor((item.currentStock ?? 3) / 2) || 3));
+    // For serialized items, seed one unit per unit of stock so currentStock
+    // matches the in_stock unit count (syncSerializedStock keeps them in sync).
+    const count = item.trackSerials
+      ? Math.max(1, Math.min(item.currentStock || 1, 25))
+      : Math.min(3, Math.max(1, Math.floor((item.currentStock ?? 3) / 2) || 3));
     const prefix = (item.sku || item.name.slice(0, 3)).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "SN";
     for (let i = 1; i <= count; i++) {
       const serial = `${prefix}-${String(i).padStart(4, "0")}`;

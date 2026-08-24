@@ -55,8 +55,8 @@ export const items: Item[] = [
   item(4, "Surge Protector", "cat-01", "sup-01", "loc-01", 12, 10, 15, 29.99), // low
   item(5, "LED Desk Lamp", "cat-01", "sup-02", "loc-02", 0, 10, 22, 39.99), // out
   item(6, "Laptop Stand", "cat-01", "sup-02", "loc-01", 65, 15, 18, 34.99),
-  item(7, "Power Bank 10000mAh", "cat-01", "sup-01", "loc-02", 8, 12, 14, 27.99), // low
-  item(8, "Webcam HD 1080p", "cat-01", "sup-02", "loc-01", 9, 10, 25, 49.99), // low
+  { ...item(7, "Power Bank 10000mAh", "cat-01", "sup-01", "loc-02", 8, 12, 14, 27.99), trackSerials: true, defaultWarrantyMonths: 12 }, // low, serialized
+  { ...item(8, "Webcam HD 1080p", "cat-01", "sup-02", "loc-01", 9, 10, 25, 49.99), trackSerials: true, defaultWarrantyMonths: 12 }, // low, serialized
 
   // Office Supplies — 8 items
   { ...item(9, "A4 Copy Paper (Ream)", "cat-02", "sup-01", "loc-01", 200, 50, 4, 7.99), customFields: cf({ "Expiration Date": "2026-12-31", "Recyclable": true }) },
@@ -86,7 +86,7 @@ export const items: Item[] = [
   item(29, "Ear Plugs (200pr)", "cat-04", "sup-04", "loc-01", 65, 20, 12, 22.99),
 
   // Tools — 6 items
-  item(30, "Cordless Drill Kit", "cat-05", "sup-01", "loc-01", 18, 5, 55, 99.99),
+  { ...item(30, "Cordless Drill Kit", "cat-05", "sup-01", "loc-01", 18, 5, 55, 99.99), trackSerials: true, defaultWarrantyMonths: 24 }, // serialized
   item(31, "Socket Wrench Set", "cat-05", "sup-01", "loc-01", 25, 8, 28, 49.99),
   item(32, "Tape Measure 25ft", "cat-05", "sup-01", "loc-02", 40, 12, 6, 11.99),
   item(33, "Utility Knife", "cat-05", "sup-01", "loc-01", 4, 10, 5, 9.99), // low

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { format } from "date-fns";
 import { OrderStatus } from "@/types/inventory";
 import type { PurchaseOrder, Supplier, Item } from "@/types/inventory";
@@ -69,17 +70,27 @@ export function POPrintView({ purchaseOrder, supplier, items }: POPrintViewProps
         <tbody>
           {purchaseOrder.items.map((li) => {
             const item = items.get(li.itemId);
+            const serials = li.receivedSerials ?? [];
             return (
-              <tr key={li.id} className="border-b border-gray-300">
-                <td className="py-1.5">{item?.name ?? li.itemId}</td>
-                <td className="py-1.5 font-mono text-xs">{item?.sku ?? "—"}</td>
-                <td className="py-1.5 text-right font-mono">{li.quantityOrdered}</td>
-                <td className="py-1.5 text-right font-mono">{li.quantityReceived}</td>
-                <td className="py-1.5 text-right font-mono">${li.unitCost.toFixed(2)}</td>
-                <td className="py-1.5 text-right font-mono font-medium">
-                  ${(li.quantityOrdered * li.unitCost).toFixed(2)}
-                </td>
-              </tr>
+              <Fragment key={li.id}>
+                <tr className={serials.length > 0 ? "" : "border-b border-gray-300"}>
+                  <td className="py-1.5">{item?.name ?? li.itemId}</td>
+                  <td className="py-1.5 font-mono text-xs">{item?.sku ?? "—"}</td>
+                  <td className="py-1.5 text-right font-mono">{li.quantityOrdered}</td>
+                  <td className="py-1.5 text-right font-mono">{li.quantityReceived}</td>
+                  <td className="py-1.5 text-right font-mono">${li.unitCost.toFixed(2)}</td>
+                  <td className="py-1.5 text-right font-mono font-medium">
+                    ${(li.quantityOrdered * li.unitCost).toFixed(2)}
+                  </td>
+                </tr>
+                {serials.length > 0 && (
+                  <tr className="border-b border-gray-300">
+                    <td colSpan={6} className="py-1 pl-4 text-xs text-gray-600">
+                      Serial numbers: <span className="font-mono">{serials.join(", ")}</span>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>
