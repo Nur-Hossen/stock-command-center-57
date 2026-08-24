@@ -74,14 +74,43 @@ export function ReceiveShipmentSheet({
 
   const serialLines = purchaseOrder.items.filter((li) => itemMap.get(li.itemId)?.trackSerials);
 
+  const { data: existingUnits } = useUnits();
+  const existingSerials = useMemo(
+    () => new Set(existingUnits.map((u) => u.serialNumber.toLowerCase())),
+    [existingUnits],
+  );
+
   function parseSerials(raw: string): string[] {
     return raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  }
+
+  // Count every entered serial across all lines to catch duplicates,
+  // both within one line and across different lines.
+  const enteredCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const li of serialLines) {
+      for (const s of parseSerials(serialsByLine[li.id] ?? "")) {
+        const key = s.toLowerCase();
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrder.items, itemMap, serialsByLine]);
+
+  function getSerialProblems(lineId: string): { duplicates: string[]; existing: string[] } {
+    const serials = parseSerials(serialsByLine[lineId] ?? "");
+    const duplicates = [...new Set(serials.filter((s) => (enteredCounts.get(s.toLowerCase()) ?? 0) > 1))];
+    const existing = [...new Set(serials.filter((s) => existingSerials.has(s.toLowerCase())))];
+    return { duplicates, existing };
   }
 
   const serialsValid = serialLines.every((li) => {
     const qty = qtys[li.id] ?? 0;
     if (qty === 0) return true;
-    return parseSerials(serialsByLine[li.id] ?? "").length === qty;
+    if (parseSerials(serialsByLine[li.id] ?? "").length !== qty) return false;
+    const { duplicates, existing } = getSerialProblems(li.id);
+    return duplicates.length === 0 && existing.length === 0;
   });
 
   const hasAnyQty = useMemo(() => Object.values(qtys).some((q) => q > 0), [qtys]);
