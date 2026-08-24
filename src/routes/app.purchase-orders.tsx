@@ -270,7 +270,7 @@ function PurchaseOrdersPage() {
               updates: { items: updatedItems, status: newStatus, updatedAt: now },
             });
 
-            const totalQty = receivedLines.reduce((sum, l) => sum + l.qty, 0);
+            const totalQty = effectiveLines.reduce((sum, l) => sum + l.qty, 0);
             toast.success(
               `Received ${totalQty} items across ${receivedLines.length} line items`,
             );
