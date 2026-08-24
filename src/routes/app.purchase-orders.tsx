@@ -179,9 +179,56 @@ function PurchaseOrdersPage() {
           onConfirm={(receivedLines, notes) => {
             const now = new Date().toISOString();
             const po = receivePO!;
+            const failedSerials: string[] = [];
 
-            // 1. Create stock movements + units (or increment stock) for each received line
-            for (const line of receivedLines) {
+            // 1. Add units / increment stock, tracking which serials were
+            // actually accepted so rejected duplicates don't count as received.
+            const effectiveLines = receivedLines
+              .map((line) => {
+                const item = catalogItems.find((i) => i.id === line.itemId);
+                if (!item) return { ...line, qty: 0, acceptedSerials: [] as string[] };
+
+                if (item.trackSerials && line.serials && line.serials.length > 0) {
+                  // Create one unit per serial; stock is synced via syncSerializedStock
+                  const acceptedSerials: string[] = [];
+                  for (const sn of line.serials) {
+                    addUnit.mutate(
+                      {
+                        itemId: item.id,
+                        serialNumber: sn,
+                        status: "in_stock",
+                        locationId: item.locationId ?? null,
+                        receivedAt: now,
+                        soldAt: null,
+                        warrantyMonths: item.defaultWarrantyMonths ?? 0,
+                        warrantyExpiresAt: null,
+                        cost: item.costPrice,
+                        notes: `Received via ${po.orderNumber}`,
+                      },
+                      {
+                        onSuccess: () => acceptedSerials.push(sn),
+                        onError: (e) => failedSerials.push(`${sn} — ${e.message}`),
+                      },
+                    );
+                  }
+                  return { ...line, qty: acceptedSerials.length, acceptedSerials };
+                }
+
+                updateItem.mutate({
+                  id: item.id,
+                  updates: { currentStock: item.currentStock + line.qty, updatedAt: now },
+                });
+                return { ...line, acceptedSerials: [] as string[] };
+              })
+              .filter((l) => l.qty > 0);
+
+            if (failedSerials.length > 0) {
+              toast.error(`Rejected serials: ${failedSerials.join("; ")}`);
+            }
+            if (effectiveLines.length === 0) return;
+
+            // 2. Create stock movements for what was actually received
+            for (const line of effectiveLines) {
               createMovement.mutate({
                 id: crypto.randomUUID(),
                 itemId: line.itemId,
@@ -194,40 +241,20 @@ function PurchaseOrdersPage() {
                 performedBy: "demo-user",
                 createdAt: now,
               });
-
-              const item = catalogItems.find((i) => i.id === line.itemId);
-              if (!item) continue;
-
-              if (item.trackSerials && line.serials && line.serials.length > 0) {
-                // Create one unit per serial; stock is synced via syncSerializedStock
-                for (const sn of line.serials) {
-                  addUnit.mutate({
-                    itemId: item.id,
-                    serialNumber: sn,
-                    status: "in_stock",
-                    locationId: item.locationId ?? null,
-                    receivedAt: now,
-                    soldAt: null,
-                    warrantyMonths: item.defaultWarrantyMonths ?? 0,
-                    warrantyExpiresAt: null,
-                    cost: item.costPrice,
-                    notes: `Received via ${po.orderNumber}`,
-                  });
-                }
-              } else {
-                updateItem.mutate({
-                  id: item.id,
-                  updates: { currentStock: item.currentStock + line.qty, updatedAt: now },
-                });
-              }
             }
 
-
-            // 3. Update PO line items received quantities
+            // 3. Update PO line items received quantities + serials
             const updatedItems = po.items.map((li) => {
-              const received = receivedLines.find((r) => r.lineItemId === li.id);
+              const received = effectiveLines.find((r) => r.lineItemId === li.id);
               if (received) {
-                return { ...li, quantityReceived: li.quantityReceived + received.qty };
+                return {
+                  ...li,
+                  quantityReceived: li.quantityReceived + received.qty,
+                  receivedSerials:
+                    received.acceptedSerials.length > 0
+                      ? [...(li.receivedSerials ?? []), ...received.acceptedSerials]
+                      : li.receivedSerials,
+                };
               }
               return li;
             });

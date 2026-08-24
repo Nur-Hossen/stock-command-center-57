@@ -201,7 +201,8 @@ export function ReceiveShipmentSheet({
                 const qty = qtys[li.id] ?? 0;
                 if (qty === 0) return null;
                 const entered = parseSerials(serialsByLine[li.id] ?? "").length;
-                const ok = entered === qty;
+                const { duplicates, existing } = getSerialProblems(li.id);
+                const ok = entered === qty && duplicates.length === 0 && existing.length === 0;
                 return (
                   <div key={li.id} className="space-y-1">
                     <Label className="text-xs">
@@ -214,6 +215,16 @@ export function ReceiveShipmentSheet({
                       rows={2}
                       className="font-mono text-xs"
                     />
+                    {duplicates.length > 0 && (
+                      <p className="text-xs text-destructive">
+                        Duplicate serial{duplicates.length > 1 ? "s" : ""} entered: {duplicates.join(", ")}
+                      </p>
+                    )}
+                    {existing.length > 0 && (
+                      <p className="text-xs text-destructive">
+                        Already in inventory: {existing.join(", ")}
+                      </p>
+                    )}
                   </div>
                 );
               })}
