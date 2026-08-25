@@ -374,7 +374,11 @@ export class DemoStore {
     // Update item quantity
     const item = this.data.items.find((i) => i.id === movement.itemId);
     if (item) {
-      if (movement.type === MovementType.Received) {
+      if (item.trackSerials) {
+        // Serialized stock is always derived from in_stock unit count —
+        // units are added/marked sold separately, so never adjust manually here.
+        this.syncSerializedStock(item.id);
+      } else if (movement.type === MovementType.Received) {
         item.currentStock += Math.abs(movement.quantity);
       } else if (movement.type === MovementType.Shipped) {
         item.currentStock = Math.max(0, item.currentStock - Math.abs(movement.quantity));

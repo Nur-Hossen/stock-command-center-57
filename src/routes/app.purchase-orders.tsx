@@ -214,10 +214,8 @@ function PurchaseOrdersPage() {
                   return { ...line, qty: acceptedSerials.length, acceptedSerials };
                 }
 
-                updateItem.mutate({
-                  id: item.id,
-                  updates: { currentStock: item.currentStock + line.qty, updatedAt: now },
-                });
+                // Stock is incremented by the Received movement below —
+                // updating it here too would double-count the received qty.
                 return { ...line, acceptedSerials: [] as string[] };
               })
               .filter((l) => l.qty > 0);
