@@ -15,7 +15,6 @@ import {
   useDeletePurchaseOrder,
   useUpdatePurchaseOrder,
   useCreateMovement,
-  useUpdateItem,
   useAddUnit,
 } from "@/hooks/useInventoryMutations";
 import { Button } from "@/components/ui/button";
@@ -49,7 +48,6 @@ function PurchaseOrdersPage() {
   const deletePO = useDeletePurchaseOrder();
   const updatePO = useUpdatePurchaseOrder();
   const createMovement = useCreateMovement();
-  const updateItem = useUpdateItem();
   const addUnit = useAddUnit();
   const canManagePOs = can("create_po");
   const isAdmin = role === "admin";
