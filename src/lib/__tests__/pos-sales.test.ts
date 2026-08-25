@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { DemoStore } from "@/lib/demo-store";
-import { ItemStatus } from "@/types/inventory";
+import { ItemStatus, MovementType } from "@/types/inventory";
 
 function addItem(store: DemoStore, opts: { trackSerials: boolean; sellingPrice?: number; defaultWarrantyMonths?: number }) {
   const now = new Date().toISOString();
@@ -199,5 +199,44 @@ describe("Warranty claim lifecycle", () => {
     const u = addUnit(store, item.id, "SN-W2");
     const res = store.createWarrantyClaim({ itemUnitId: u.id, claimType: "service" });
     expect("error" in res).toBe(true);
+  });
+});
+
+describe("PO receive stock counting", () => {
+  function receiveMovement(itemId: string, qty: number) {
+    store.createMovement({
+      id: crypto.randomUUID(), itemId, type: MovementType.Received, quantity: qty,
+      fromLocationId: null, toLocationId: null, reference: "PO-1",
+      notes: "", performedBy: "demo-user", createdAt: new Date().toISOString(),
+    });
+  }
+
+  it("counts a non-serialized receive exactly once (40 received → 40 in stock)", () => {
+    const item = addItem(store, { trackSerials: false });
+    receiveMovement(item.id, 40);
+    expect(store.getItemById(item.id)!.currentStock).toBe(40);
+  });
+
+  it("derives serialized stock from units only — receive movement never double-counts", () => {
+    const item = addItem(store, { trackSerials: true });
+    // Simulate receive of 3 serialized units: addUnit + Received movement
+    addUnit(store, item.id, "SN-R1");
+    addUnit(store, item.id, "SN-R2");
+    addUnit(store, item.id, "SN-R3");
+    receiveMovement(item.id, 3);
+    expect(store.getItemById(item.id)!.currentStock).toBe(3); // not 6
+  });
+
+  it("matches the reported scenario: 3 + 2 + 40 received → 45 in stock, not 85", () => {
+    const a = addItem(store, { trackSerials: true });
+    const b = addItem(store, { trackSerials: true });
+    const c = addItem(store, { trackSerials: false });
+    addUnit(store, a.id, "SN-A1"); addUnit(store, a.id, "SN-A2"); addUnit(store, a.id, "SN-A3");
+    receiveMovement(a.id, 3);
+    addUnit(store, b.id, "SN-B1"); addUnit(store, b.id, "SN-B2");
+    receiveMovement(b.id, 2);
+    receiveMovement(c.id, 40);
+    const total = [a, b, c].reduce((s, i) => s + store.getItemById(i.id)!.currentStock, 0);
+    expect(total).toBe(45);
   });
 });
