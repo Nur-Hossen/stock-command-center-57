@@ -194,8 +194,26 @@ export interface Sale {
   soldAt: string;
   soldBy: string;
   notes: string;
+  /** How the order reaches the customer (by hand or courier). */
+  delivery: DeliveryInfo;
+  /** Unit ids already returned through a refund. */
+  refundedUnitIds: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** A (possibly partial) return of units from a sale. */
+export interface SaleRefund {
+  id: string;
+  saleId: string;
+  refundNumber: string;
+  itemUnitIds: string[];
+  amount: number;
+  reason: string;
+  /** How the returned goods travel back (by hand or courier). */
+  delivery: DeliveryInfo;
+  refundedAt: string;
+  createdAt: string;
 }
 
 export type WarrantyClaimStatus = "pending" | "in_progress" | "resolved" | "rejected";
@@ -207,6 +225,8 @@ export interface WarrantyClaim {
   claimType: WarrantyType;
   status: WarrantyClaimStatus;
   notes: string;
+  /** How the claimed unit travels (drop-off by hand or courier). */
+  delivery: DeliveryInfo;
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
