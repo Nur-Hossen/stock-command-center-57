@@ -716,6 +716,8 @@ export class DemoStore {
     notes?: string;
     /** Override "show discount on invoice" for this sale; defaults to settings. */
     showDiscountOnInvoice?: boolean;
+    /** How the order is delivered (by hand or courier). */
+    delivery?: DeliveryInfo;
     /** Test hook — inject a fixed sale timestamp. */
     now?: Date;
   }): Sale | { error: string } {
