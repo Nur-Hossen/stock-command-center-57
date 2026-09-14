@@ -136,7 +136,26 @@ export interface Customer {
   updatedAt: string;
 }
 
-export type SaleStatus = "draft" | "completed" | "refunded";
+export type SaleStatus = "draft" | "completed" | "partially_refunded" | "refunded";
+
+export type DeliveryMethod = "hand" | "courier";
+
+/** Delivery / logistics details attached to a sale, refund, or warranty claim. */
+export interface DeliveryInfo {
+  method: DeliveryMethod;
+  courierName: string;
+  trackingNumber: string;
+  address: string;
+  notes: string;
+}
+
+export const EMPTY_DELIVERY: DeliveryInfo = {
+  method: "hand",
+  courierName: "",
+  trackingNumber: "",
+  address: "",
+  notes: "",
+};
 export type SaleChannel = "retail" | "dealer";
 export type WarrantyType = "service" | "replacement";
 
