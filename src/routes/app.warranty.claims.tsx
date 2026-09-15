@@ -1,3 +1,4 @@
+import { DeliverySummary } from "@/components/shared/DeliveryFields";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -72,6 +73,8 @@ function ClaimsPage() {
                     <div className="text-xs text-muted-foreground">
                       SN <span className="font-mono">{unit?.serialNumber}</span> · Filed {new Date(c.createdAt).toLocaleString()}
                     </div>
+                    <div className="text-xs">Order: {demoStore?.getSales().find(s => s.id === c.saleId)?.documentNumber ?? "—"}</div>
+                    <DeliverySummary value={c.delivery} />
                     {c.notes && <div className="mt-1 text-xs">{c.notes}</div>}
                   </div>
                   <div className="flex gap-1">

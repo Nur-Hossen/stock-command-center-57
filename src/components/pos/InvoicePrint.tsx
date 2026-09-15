@@ -1,3 +1,4 @@
+import { DeliverySummary } from "@/components/shared/DeliveryFields";
 import type { Sale, Customer, Item } from "@/types/inventory";
 
 interface Props {
@@ -13,7 +14,7 @@ export function InvoicePrint({ sale, customer, items, businessName }: Props) {
   const showDisc = sale.showDiscountOnInvoice;
 
   return (
-    <div className="rounded-lg border border-border bg-background p-8 print:border-0 print:p-0">
+    <div data-invoice className="rounded-lg border border-border bg-background p-8 print:border-0 print:p-0">
       <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="text-lg font-semibold">{businessName}</div>
@@ -39,6 +40,8 @@ export function InvoicePrint({ sale, customer, items, businessName }: Props) {
         </div>
       </div>
 
+      <div className="mb-4"><DeliverySummary value={sale.delivery} /></div>
+      <style>{`@media print { body * { visibility: hidden; } [data-invoice], [data-invoice] * { visibility: visible; } [data-invoice] { position: absolute; inset: 0; width: 100%; } [role="dialog"] { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; overflow: visible !important; } }`}</style>
       <table className="mb-4 w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">

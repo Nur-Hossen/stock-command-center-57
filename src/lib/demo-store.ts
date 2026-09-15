@@ -18,8 +18,11 @@ import type {
   WarrantyClaim,
   WarrantyClaimStatus,
   SalesSettings,
+  DeliveryInfo,
+  SaleRefund,
 } from "@/types/inventory";
-import { MovementType } from "@/types/inventory";
+import { refundAmount } from "./refund-amount";
+import { EMPTY_DELIVERY, MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
 import { BUILTIN_ROLES, type RoleDefinition, type PermissionAction } from "@/lib/roles";
 
@@ -132,6 +135,7 @@ export class DemoStore {
   private units: ItemUnit[] = [];
   private customers: Customer[] = seedCustomers();
   private sales: Sale[] = [];
+  private refunds: SaleRefund[] = [];
   private saleCounter = 1000;
   private invoiceCounterByYear: Record<number, number> = {};
   private challanCounterByYear: Record<number, number> = {};
@@ -791,6 +795,8 @@ export class DemoStore {
       soldAt,
       soldBy: input.soldBy,
       notes: input.notes ?? "",
+      delivery: { ...(input.delivery ?? EMPTY_DELIVERY) },
+      refundedUnitIds: [],
       createdAt: soldAt,
       updatedAt: soldAt,
     };
@@ -844,6 +850,7 @@ export class DemoStore {
     lineItems: { itemUnitId: string; unitPrice: number; warrantyMonths?: number }[];
     taxRate?: number;
     notes?: string;
+    delivery?: DeliveryInfo;
   }): Sale | { error: string } {
     return this.createPosSale({
       channel: "retail",
@@ -852,41 +859,52 @@ export class DemoStore {
       lineItems: input.lineItems,
       taxRate: input.taxRate,
       notes: input.notes,
+      delivery: input.delivery,
     });
   }
 
-  refundSale(id: string): Sale | { error: string } {
-    const idx = this.sales.findIndex((s) => s.id === id);
-    if (idx === -1) return { error: "Sale not found" };
-    if (this.sales[idx].status === "refunded") return { error: "Already refunded" };
+  getSaleRefunds(saleId: string): SaleRefund[] {
+    return this.refunds.filter(r => r.saleId === saleId);
+  }
+
+  refundSaleUnits(id: string, unitIds: string[], delivery: DeliveryInfo = EMPTY_DELIVERY, reason = ""): { sale: Sale; refund: SaleRefund } | { error: string } {
+    const idx = this.sales.findIndex(s => s.id === id);
+    if (idx < 0) return { error: "Sale not found" };
     const sale = this.sales[idx];
-    for (const line of sale.items) {
-      const uidx = this.units.findIndex((u) => u.id === line.itemUnitId);
-      if (uidx !== -1) {
-        this.units[uidx] = {
-          ...this.units[uidx],
-          status: "returned",
-          soldAt: null,
-          warrantyExpiresAt: null,
-          updatedAt: new Date().toISOString(),
-        };
-        this.syncSerializedStock(this.units[uidx].itemId);
-      }
+    if (!["completed", "partially_refunded"].includes(sale.status)) return { error: "Sale cannot be refunded" };
+    if (!unitIds.length || new Set(unitIds).size !== unitIds.length) return { error: "Select unique units to refund" };
+    for (const id of unitIds) {
+      if (!sale.items.some(l => l.itemUnitId === id) || sale.refundedUnitIds.includes(id)) return { error: "Unit is not eligible or already refunded" };
+      if (this.warrantyClaims.some(c => c.itemUnitId === id && ["pending", "in_progress"].includes(c.status))) return { error: "Resolve the open warranty claim before refunding this unit" };
+      if (this.getUnitById(id)?.status !== "sold") return { error: "Unit is not available for refund" };
     }
-    // Reverse dealer credit if any balance was outstanding.
-    if (sale.channel === "dealer" && sale.balanceDue > 0) {
-      const cidx = this.customers.findIndex((c) => c.id === sale.customerId);
-      if (cidx !== -1) {
-        this.customers[cidx] = {
-          ...this.customers[cidx],
-          balance: Math.round((this.customers[cidx].balance - sale.balanceDue) * 100) / 100,
-          updatedAt: new Date().toISOString(),
-        };
-      }
+    const now = new Date().toISOString();
+    const amount = refundAmount(sale, unitIds);
+    const refundedUnitIds = [...sale.refundedUnitIds, ...unitIds];
+    const full = refundedUnitIds.length === sale.items.length;
+    const remainingTotal = sale.total - refundAmount(sale, sale.refundedUnitIds);
+    const credit = full ? Math.max(0, sale.balanceDue) : Math.min(Math.max(0, sale.balanceDue), Math.round((remainingTotal > 0 ? amount / remainingTotal : 0) * Math.max(0, sale.balanceDue) * 100) / 100);
+    for (const id of unitIds) {
+      const uidx = this.units.findIndex(u => u.id === id);
+      this.units[uidx] = { ...this.units[uidx], status: "in_stock", soldAt: null, warrantyExpiresAt: null, updatedAt: now };
+      this.syncSerializedStock(this.units[uidx].itemId);
     }
-    this.sales[idx] = { ...sale, status: "refunded", updatedAt: new Date().toISOString() };
+    if (sale.channel === "dealer") {
+      const cidx = this.customers.findIndex(c => c.id === sale.customerId);
+      if (cidx >= 0) this.customers[cidx] = { ...this.customers[cidx], balance: Math.round((this.customers[cidx].balance - credit) * 100) / 100, updatedAt: now };
+    }
+    const refund: SaleRefund = { id: crypto.randomUUID(), saleId: id, refundNumber: `REF-${this.refunds.length + 1}`, itemUnitIds: [...unitIds], amount, reason, delivery: { ...delivery }, refundedAt: now, createdAt: now };
+    this.sales[idx] = { ...sale, refundedUnitIds, status: full ? "refunded" : "partially_refunded", balanceDue: Math.round((sale.balanceDue - credit) * 100) / 100, updatedAt: now };
+    this.refunds.push(refund);
     this.version++;
-    return this.sales[idx];
+    return { sale: this.sales[idx], refund };
+  }
+
+  refundSale(id: string): Sale | { error: string } {
+    const sale = this.sales.find(s => s.id === id);
+    if (!sale) return { error: "Sale not found" };
+    const result = this.refundSaleUnits(id, sale.items.map(l => l.itemUnitId).filter(id => !sale.refundedUnitIds.includes(id)));
+    return "error" in result ? result : result.sale;
   }
 
   // ─── Sales settings ────────────────────────────────────
@@ -909,13 +927,15 @@ export class DemoStore {
     itemUnitId: string;
     claimType: WarrantyType;
     notes?: string;
+    delivery?: DeliveryInfo;
   }): WarrantyClaim | { error: string } {
     const unit = this.units.find((u) => u.id === input.itemUnitId);
     if (!unit) return { error: "Serial not found" };
     if (unit.status !== "sold" && unit.status !== "warranty_service") {
       return { error: "Warranty claims are only valid on sold units" };
     }
-    const sale = this.sales.find((s) => s.items.some((li) => li.itemUnitId === unit.id));
+    if (this.warrantyClaims.some(c => c.itemUnitId === unit.id && ["pending", "in_progress"].includes(c.status))) return { error: "An open claim already exists for this unit" };
+    const sale = [...this.sales].reverse().find((s) => !s.refundedUnitIds.includes(unit.id) && s.items.some((li) => li.itemUnitId === unit.id));
     const now = new Date().toISOString();
     const claim: WarrantyClaim = {
       id: crypto.randomUUID(),
@@ -924,6 +944,7 @@ export class DemoStore {
       claimType: input.claimType,
       status: "pending",
       notes: input.notes ?? "",
+      delivery: { ...(input.delivery ?? EMPTY_DELIVERY) },
       createdAt: now,
       updatedAt: now,
       resolvedAt: null,

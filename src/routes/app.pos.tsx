@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { DeliveryFields } from "@/components/shared/DeliveryFields";
+import { EMPTY_DELIVERY } from "@/types/inventory";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
@@ -38,6 +40,8 @@ interface CartLine {
 
 function PosPage() {
   const { can } = usePermissions();
+  const navigate = useNavigate();
+  const [delivery, setDelivery] = useState({ ...EMPTY_DELIVERY });
   const { data: customers } = useCustomers();
   const { data: items } = useItems();
   const { data: allUnits } = useUnits();
@@ -146,9 +150,10 @@ function PosPage() {
         grossDiscount,
         amountPaid: amountPaid === "" ? total : Number(amountPaid),
         notes,
+        delivery,
       });
       toast.success(`Sale recorded: ${sale.documentNumber}`);
-      setLastSale(sale);
+      void navigate({ to: "/app/sales", hash: sale.id });
       resetAll();
     } catch (e) {
       toast.error((e as Error).message);
@@ -306,6 +311,7 @@ function PosPage() {
           )}
         </div>
         <div className="space-y-2">
+          <DeliveryFields value={delivery} onChange={setDelivery} />
           <label className="text-sm font-medium">Notes</label>
           <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
           <Button className="w-full" size="lg"
