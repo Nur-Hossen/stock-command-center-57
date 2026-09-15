@@ -27,7 +27,10 @@ import { Route as AppCustomersRouteImport } from './routes/app.customers'
 import { Route as AppCatalogRouteImport } from './routes/app.catalog'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiInsightsRouteImport } from './routes/app.ai-insights'
+import { Route as AppWarrantyIndexRouteImport } from './routes/app.warranty.index'
+import { Route as AppSalesIndexRouteImport } from './routes/app.sales.index'
 import { Route as AppWarrantyClaimsRouteImport } from './routes/app.warranty.claims'
+import { Route as AppSalesSaleIdRefundRouteImport } from './routes/app.sales.$saleId.refund'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -119,10 +122,25 @@ const AppAiInsightsRoute = AppAiInsightsRouteImport.update({
   path: '/ai-insights',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWarrantyIndexRoute = AppWarrantyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWarrantyRoute,
+} as any)
+const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSalesRoute,
+} as any)
 const AppWarrantyClaimsRoute = AppWarrantyClaimsRouteImport.update({
   id: '/claims',
   path: '/claims',
   getParentRoute: () => AppWarrantyRoute,
+} as any)
+const AppSalesSaleIdRefundRoute = AppSalesSaleIdRefundRouteImport.update({
+  id: '/$saleId/refund',
+  path: '/$saleId/refund',
+  getParentRoute: () => AppSalesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -139,12 +157,15 @@ export interface FileRoutesByFullPath {
   '/app/pos': typeof AppPosRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
-  '/app/sales': typeof AppSalesRoute
+  '/app/sales': typeof AppSalesRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
+  '/app/sales/': typeof AppSalesIndexRoute
+  '/app/warranty/': typeof AppWarrantyIndexRoute
+  '/app/sales/$saleId/refund': typeof AppSalesSaleIdRefundRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -159,12 +180,13 @@ export interface FileRoutesByTo {
   '/app/pos': typeof AppPosRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
-  '/app/sales': typeof AppSalesRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
-  '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app': typeof AppIndexRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
+  '/app/sales': typeof AppSalesIndexRoute
+  '/app/warranty': typeof AppWarrantyIndexRoute
+  '/app/sales/$saleId/refund': typeof AppSalesSaleIdRefundRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -181,12 +203,15 @@ export interface FileRoutesById {
   '/app/pos': typeof AppPosRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
-  '/app/sales': typeof AppSalesRoute
+  '/app/sales': typeof AppSalesRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
+  '/app/sales/': typeof AppSalesIndexRoute
+  '/app/warranty/': typeof AppWarrantyIndexRoute
+  '/app/sales/$saleId/refund': typeof AppSalesSaleIdRefundRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -210,6 +235,9 @@ export interface FileRouteTypes {
     | '/app/warranty'
     | '/app/'
     | '/app/warranty/claims'
+    | '/app/sales/'
+    | '/app/warranty/'
+    | '/app/sales/$saleId/refund'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -224,12 +252,13 @@ export interface FileRouteTypes {
     | '/app/pos'
     | '/app/purchase-orders'
     | '/app/requests'
-    | '/app/sales'
     | '/app/settings'
     | '/app/suppliers'
-    | '/app/warranty'
     | '/app'
     | '/app/warranty/claims'
+    | '/app/sales'
+    | '/app/warranty'
+    | '/app/sales/$saleId/refund'
   id:
     | '__root__'
     | '/'
@@ -251,6 +280,9 @@ export interface FileRouteTypes {
     | '/app/warranty'
     | '/app/'
     | '/app/warranty/claims'
+    | '/app/sales/'
+    | '/app/warranty/'
+    | '/app/sales/$saleId/refund'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -386,6 +418,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiInsightsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/warranty/': {
+      id: '/app/warranty/'
+      path: '/'
+      fullPath: '/app/warranty/'
+      preLoaderRoute: typeof AppWarrantyIndexRouteImport
+      parentRoute: typeof AppWarrantyRoute
+    }
+    '/app/sales/': {
+      id: '/app/sales/'
+      path: '/'
+      fullPath: '/app/sales/'
+      preLoaderRoute: typeof AppSalesIndexRouteImport
+      parentRoute: typeof AppSalesRoute
+    }
     '/app/warranty/claims': {
       id: '/app/warranty/claims'
       path: '/claims'
@@ -393,15 +439,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWarrantyClaimsRouteImport
       parentRoute: typeof AppWarrantyRoute
     }
+    '/app/sales/$saleId/refund': {
+      id: '/app/sales/$saleId/refund'
+      path: '/$saleId/refund'
+      fullPath: '/app/sales/$saleId/refund'
+      preLoaderRoute: typeof AppSalesSaleIdRefundRouteImport
+      parentRoute: typeof AppSalesRoute
+    }
   }
 }
 
+interface AppSalesRouteChildren {
+  AppSalesIndexRoute: typeof AppSalesIndexRoute
+  AppSalesSaleIdRefundRoute: typeof AppSalesSaleIdRefundRoute
+}
+
+const AppSalesRouteChildren: AppSalesRouteChildren = {
+  AppSalesIndexRoute: AppSalesIndexRoute,
+  AppSalesSaleIdRefundRoute: AppSalesSaleIdRefundRoute,
+}
+
+const AppSalesRouteWithChildren = AppSalesRoute._addFileChildren(
+  AppSalesRouteChildren,
+)
+
 interface AppWarrantyRouteChildren {
   AppWarrantyClaimsRoute: typeof AppWarrantyClaimsRoute
+  AppWarrantyIndexRoute: typeof AppWarrantyIndexRoute
 }
 
 const AppWarrantyRouteChildren: AppWarrantyRouteChildren = {
   AppWarrantyClaimsRoute: AppWarrantyClaimsRoute,
+  AppWarrantyIndexRoute: AppWarrantyIndexRoute,
 }
 
 const AppWarrantyRouteWithChildren = AppWarrantyRoute._addFileChildren(
@@ -420,7 +489,7 @@ interface AppRouteChildren {
   AppPosRoute: typeof AppPosRoute
   AppPurchaseOrdersRoute: typeof AppPurchaseOrdersRoute
   AppRequestsRoute: typeof AppRequestsRoute
-  AppSalesRoute: typeof AppSalesRoute
+  AppSalesRoute: typeof AppSalesRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppSuppliersRoute: typeof AppSuppliersRoute
   AppWarrantyRoute: typeof AppWarrantyRouteWithChildren
@@ -439,7 +508,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPosRoute: AppPosRoute,
   AppPurchaseOrdersRoute: AppPurchaseOrdersRoute,
   AppRequestsRoute: AppRequestsRoute,
-  AppSalesRoute: AppSalesRoute,
+  AppSalesRoute: AppSalesRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppSuppliersRoute: AppSuppliersRoute,
   AppWarrantyRoute: AppWarrantyRouteWithChildren,
