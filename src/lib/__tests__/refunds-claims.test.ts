@@ -59,7 +59,7 @@ describe("Partial refunds", () => {
     expect("error" in res).toBe(false);
     if ("error" in res) return;
     expect(res.sale.status).toBe("partially_refunded");
-    expect(store.getUnits().find(u => u.id === a.id)?.status).toBe("returned");
+    expect(store.getUnits().find(u => u.id === a.id)?.status).toBe("in_stock");
     expect(store.getUnits().find(u => u.id === b.id)?.status).toBe("sold");
   });
 
