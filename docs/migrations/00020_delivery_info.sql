@@ -78,7 +78,3 @@ ALTER TABLE public.warranty_claims
   ADD COLUMN IF NOT EXISTS delivery_tracking_number text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS delivery_address text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS delivery_notes text NOT NULL DEFAULT '';
-
-CREATE TRIGGER trg_sale_refunds_updated
-  BEFORE UPDATE ON public.sale_refunds
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
