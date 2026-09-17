@@ -6,9 +6,6 @@ import { toast } from "sonner";
 import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
