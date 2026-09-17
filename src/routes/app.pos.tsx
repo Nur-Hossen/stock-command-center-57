@@ -7,7 +7,7 @@ import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -15,6 +15,7 @@ import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
+import { CustomerCombobox } from "@/components/customers/CustomerCombobox";
 import type { Sale, SaleChannel } from "@/types/inventory";
 
 export const Route = createFileRoute("/app/pos")({

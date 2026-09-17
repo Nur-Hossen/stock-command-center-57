@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
+import { CustomerCombobox } from "@/components/customers/CustomerCombobox";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useSales, useUnits, useItems } from "@/hooks/useInventoryData";
 import { useCreateSale } from "@/hooks/useInventoryMutations";
