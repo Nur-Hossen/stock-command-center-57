@@ -195,17 +195,12 @@ function PosPage() {
             ))}
           </div>
           <div className="flex min-w-[220px] flex-1 gap-2">
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger><SelectValue placeholder={`Select ${channel} customer`} /></SelectTrigger>
-              <SelectContent>
-                {filteredCustomers.length === 0 && <div className="p-2 text-xs text-muted-foreground">No {channel} customers</div>}
-                {filteredCustomers.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}{c.phone ? ` · ${c.phone}` : ""}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomerCombobox
+              customers={filteredCustomers}
+              value={customerId}
+              onChange={setCustomerId}
+              placeholder={`Select ${channel} customer`}
+            />
             <Button
               type="button"
               variant="outline"

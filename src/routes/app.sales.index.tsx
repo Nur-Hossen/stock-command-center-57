@@ -151,16 +151,11 @@ function SalesPage() {
             <div>
               <label className="text-sm font-medium">Customer *</label>
               <div className="flex gap-2">
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                  <SelectContent>
-                    {sortedCustomers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}{c.phone ? ` · ${c.phone}` : ""} — {c.type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CustomerCombobox
+                  customers={sortedCustomers}
+                  value={customerId}
+                  onChange={setCustomerId}
+                />
                 <Button
                   type="button"
                   variant="outline"
