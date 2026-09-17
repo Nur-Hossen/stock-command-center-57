@@ -6,15 +6,13 @@ import { toast } from "sonner";
 import { Trash2, ScanLine, Printer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useItems, useUnits } from "@/hooks/useInventoryData";
 import { useCreatePosSale, useUnitByScan, useSalesSettings, usePeekDocumentNumber } from "@/hooks/usePosData";
 import { InvoicePrint } from "@/components/pos/InvoicePrint";
 import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
+import { CustomerCombobox } from "@/components/customers/CustomerCombobox";
 import type { Sale, SaleChannel } from "@/types/inventory";
 
 export const Route = createFileRoute("/app/pos")({
@@ -195,17 +193,12 @@ function PosPage() {
             ))}
           </div>
           <div className="flex min-w-[220px] flex-1 gap-2">
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger><SelectValue placeholder={`Select ${channel} customer`} /></SelectTrigger>
-              <SelectContent>
-                {filteredCustomers.length === 0 && <div className="p-2 text-xs text-muted-foreground">No {channel} customers</div>}
-                {filteredCustomers.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}{c.phone ? ` · ${c.phone}` : ""}{c.type === "dealer" && c.balance > 0 ? ` — balance $${c.balance.toFixed(2)}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CustomerCombobox
+              customers={filteredCustomers}
+              value={customerId}
+              onChange={setCustomerId}
+              placeholder={`Select ${channel} customer`}
+            />
             <Button
               type="button"
               variant="outline"

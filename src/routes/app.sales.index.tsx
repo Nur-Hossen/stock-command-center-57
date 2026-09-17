@@ -10,11 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { QuickCustomerDialog } from "@/components/customers/QuickCustomerDialog";
+import { CustomerCombobox } from "@/components/customers/CustomerCombobox";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomers, useSales, useUnits, useItems } from "@/hooks/useInventoryData";
 import { useCreateSale } from "@/hooks/useInventoryMutations";
@@ -151,16 +149,11 @@ function SalesPage() {
             <div>
               <label className="text-sm font-medium">Customer *</label>
               <div className="flex gap-2">
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                  <SelectContent>
-                    {sortedCustomers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}{c.phone ? ` · ${c.phone}` : ""} — {c.type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CustomerCombobox
+                  customers={sortedCustomers}
+                  value={customerId}
+                  onChange={setCustomerId}
+                />
                 <Button
                   type="button"
                   variant="outline"
