@@ -20,9 +20,26 @@ import type {
   SalesSettings,
   DeliveryInfo,
   SaleRefund,
+  Service,
+  ServiceItem,
+  ServicePayment,
+  ServiceStatus,
+  ServiceStatusEvent,
+  ServiceTracking,
+  ServiceType,
+  VendorWarrantyTracking,
 } from "@/types/inventory";
 import { refundAmount } from "./refund-amount";
-import { EMPTY_DELIVERY, MovementType } from "@/types/inventory";
+import {
+  canTransition,
+  dateKey,
+  formatServiceNumber,
+  serviceTotals,
+  validatePayment,
+  type PaymentDraft,
+  type ServiceTotals,
+} from "./service-logic";
+import { EMPTY_DELIVERY, EMPTY_SERVICE_TRACKING, MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
 import { BUILTIN_ROLES, type RoleDefinition, type PermissionAction } from "@/lib/roles";
 
