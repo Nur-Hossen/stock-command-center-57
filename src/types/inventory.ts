@@ -232,6 +232,158 @@ export interface WarrantyClaim {
   resolvedAt: string | null;
 }
 
+// ─── Service management ──────────────────────────────────
+
+export type ServiceType = "paid" | "non_paid";
+
+export type ServiceStatus = "pending" | "repairing" | "solved" | "damaged" | "delivered";
+
+export type ServicePaymentStatus = "pending" | "partial" | "paid";
+
+export type ReceivingMethod = "customer_brought" | "courier" | "pickup_service" | "third_party";
+
+export type ProductCondition = "excellent" | "good" | "fair" | "poor" | "damaged";
+
+export type VendorWarrantyStatus =
+  | "pending_review"
+  | "sent"
+  | "processing"
+  | "received"
+  | "rejected"
+  | "replaced";
+
+export type QualityCheckStatus = "pending" | "passed" | "failed";
+
+export type ServicePaymentMethod = "cash" | "bank" | "mfs";
+
+/** A part or piece of equipment billed on a service. */
+export interface ServiceItem {
+  id: string;
+  serviceId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface ServiceStatusEvent {
+  id: string;
+  serviceId: string;
+  status: ServiceStatus;
+  notes: string;
+  by: string;
+  at: string;
+}
+
+export interface ServicePayment {
+  id: string;
+  serviceId: string;
+  method: ServicePaymentMethod;
+  amount: number;
+  paidAt: string;
+  receivedBy: string;
+  /** Bank deposits */
+  bankName: string;
+  branchName: string;
+  accountNumber: string;
+  /** Mandatory for bank, optional for MFS. */
+  referenceNumber: string;
+  /** Mobile financial services */
+  mobileNumber: string;
+  transactionId: string;
+  /** Data URL of an uploaded receipt / screenshot. */
+  proofUrl: string;
+  notes: string;
+}
+
+/** How the product reached us and how it went back. */
+export interface ServiceTracking {
+  receivingMethod: ReceivingMethod;
+  courierName: string;
+  courierContact: string;
+  trackingNumber: string;
+  courierCharge: number;
+  receiptNumber: string;
+  pickupAddress: string;
+  pickupPerson: string;
+  pickupPhone: string;
+  pickupDate: string;
+  condition: ProductCondition;
+  /** Data URLs of condition photos. */
+  photoUrls: string[];
+  deliveryDate: string;
+  deliveryPerson: string;
+  receiverName: string;
+  deliveryNotes: string;
+}
+
+export const EMPTY_SERVICE_TRACKING: ServiceTracking = {
+  receivingMethod: "customer_brought",
+  courierName: "",
+  courierContact: "",
+  trackingNumber: "",
+  courierCharge: 0,
+  receiptNumber: "",
+  pickupAddress: "",
+  pickupPerson: "",
+  pickupPhone: "",
+  pickupDate: "",
+  condition: "good",
+  photoUrls: [],
+  deliveryDate: "",
+  deliveryPerson: "",
+  receiverName: "",
+  deliveryNotes: "",
+};
+
+/** Warranty replacement routed through a vendor (existing supplier). */
+export interface VendorWarrantyTracking {
+  vendorId: string;
+  status: VendorWarrantyStatus;
+  sentDate: string;
+  expectedReturnDate: string;
+  receivedDate: string;
+  courierName: string;
+  trackingNumber: string;
+  qualityCheck: QualityCheckStatus;
+  notes: string;
+}
+
+export interface Service {
+  id: string;
+  /** SRV-YYYYMMDD-NNNN */
+  serviceNumber: string;
+  customerId: string;
+  serviceType: ServiceType;
+  status: ServiceStatus;
+  /** Set when the product came from our catalog. */
+  itemId: string | null;
+  itemUnitId: string | null;
+  isInHouseProduct: boolean;
+  productName: string;
+  productSerial: string;
+  productModel: string;
+  problemDescription: string;
+  serviceNotes: string;
+  technicianName: string;
+  receivedDate: string;
+  expectedDeliveryDate: string;
+  actualDeliveryDate: string | null;
+  serviceCharge: number;
+  discount: number;
+  vatTax: number;
+  items: ServiceItem[];
+  payments: ServicePayment[];
+  statusHistory: ServiceStatusEvent[];
+  tracking: ServiceTracking;
+  vendorWarranty: VendorWarrantyTracking | null;
+  /** Linked warranty claim when the service came from a claim. */
+  warrantyClaimId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SalesSettings {
   /** Show discount column on printed invoices. */
   showDiscountOnInvoice: boolean;
