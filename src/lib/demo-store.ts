@@ -141,10 +141,13 @@ export class DemoStore {
   private challanCounterByYear: Record<number, number> = {};
   private warrantyClaims: WarrantyClaim[] = [];
   private salesSettings: SalesSettings = { ...DEFAULT_SALES_SETTINGS };
+  private services: Service[] = [];
+  private serviceCounterByDay: Record<string, number> = {};
 
   constructor() {
     this.data = generateSeedData();
     this.units = seedUnitsFor(this.data.items);
+    this.seedServices();
   }
 
   getVersion() {
