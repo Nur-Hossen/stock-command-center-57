@@ -20,9 +20,26 @@ import type {
   SalesSettings,
   DeliveryInfo,
   SaleRefund,
+  Service,
+  ServiceItem,
+  ServicePayment,
+  ServiceStatus,
+  ServiceStatusEvent,
+  ServiceTracking,
+  ServiceType,
+  VendorWarrantyTracking,
 } from "@/types/inventory";
 import { refundAmount } from "./refund-amount";
-import { EMPTY_DELIVERY, MovementType } from "@/types/inventory";
+import {
+  canTransition,
+  dateKey,
+  formatServiceNumber,
+  serviceTotals,
+  validatePayment,
+  type PaymentDraft,
+  type ServiceTotals,
+} from "./service-logic";
+import { EMPTY_DELIVERY, EMPTY_SERVICE_TRACKING, MovementType } from "@/types/inventory";
 import { generateSeedData, type SeedData } from "./demo/index";
 import { BUILTIN_ROLES, type RoleDefinition, type PermissionAction } from "@/lib/roles";
 
@@ -141,10 +158,13 @@ export class DemoStore {
   private challanCounterByYear: Record<number, number> = {};
   private warrantyClaims: WarrantyClaim[] = [];
   private salesSettings: SalesSettings = { ...DEFAULT_SALES_SETTINGS };
+  private services: Service[] = [];
+  private serviceCounterByDay: Record<string, number> = {};
 
   constructor() {
     this.data = generateSeedData();
     this.units = seedUnitsFor(this.data.items);
+    this.seedServices();
   }
 
   getVersion() {
@@ -976,5 +996,300 @@ export class DemoStore {
     };
     this.version++;
     return this.warrantyClaims[idx];
+  }
+
+  // ─── Services ──────────────────────────────────────────
+  getServices(filters?: {
+    status?: ServiceStatus;
+    customerId?: string;
+    search?: string;
+    from?: string;
+    to?: string;
+  }): Service[] {
+    let r = [...this.services];
+    if (filters?.status) r = r.filter((s) => s.status === filters.status);
+    if (filters?.customerId) r = r.filter((s) => s.customerId === filters.customerId);
+    if (filters?.from) r = r.filter((s) => s.receivedDate >= filters.from!);
+    if (filters?.to) r = r.filter((s) => s.receivedDate <= `${filters.to!}T23:59:59.999Z`);
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      r = r.filter((s) =>
+        s.serviceNumber.toLowerCase().includes(q) ||
+        s.productName.toLowerCase().includes(q) ||
+        s.productSerial.toLowerCase().includes(q) ||
+        s.problemDescription.toLowerCase().includes(q) ||
+        (this.getCustomerById(s.customerId)?.name ?? "").toLowerCase().includes(q),
+      );
+    }
+    return r.sort((a, b) => new Date(b.receivedDate).getTime() - new Date(a.receivedDate).getTime());
+  }
+
+  getServiceById(id: string): Service | undefined {
+    return this.services.find((s) => s.id === id);
+  }
+
+  getServicesForCustomer(customerId: string): Service[] {
+    return this.services.filter((s) => s.customerId === customerId);
+  }
+
+  /** Preview the next service number for a given day (sequence resets daily). */
+  nextServiceNumber(now = new Date()): string {
+    const key = dateKey(now);
+    return formatServiceNumber(now, (this.serviceCounterByDay[key] ?? 0) + 1);
+  }
+
+  private takeServiceNumber(now: Date): string {
+    const key = dateKey(now);
+    this.serviceCounterByDay[key] = (this.serviceCounterByDay[key] ?? 0) + 1;
+    return formatServiceNumber(now, this.serviceCounterByDay[key]);
+  }
+
+  createService(input: {
+    customerId: string;
+    serviceType: ServiceType;
+    itemId?: string | null;
+    itemUnitId?: string | null;
+    productName: string;
+    productSerial?: string;
+    productModel?: string;
+    problemDescription: string;
+    serviceNotes?: string;
+    technicianName?: string;
+    expectedDeliveryDate?: string;
+    serviceCharge?: number;
+    discount?: number;
+    vatTax?: number;
+    tracking?: Partial<ServiceTracking>;
+    warrantyClaimId?: string | null;
+    createdBy?: string;
+    now?: Date;
+  }): Service | { error: string } {
+    if (!input.customerId || !this.getCustomerById(input.customerId)) return { error: "Select a valid customer" };
+    const productName = input.productName.trim();
+    if (productName.length < 3) return { error: "Product name must be at least 3 characters" };
+    if (!input.problemDescription.trim()) return { error: "Problem description is required" };
+    const isInHouse = Boolean(input.itemId);
+    const received = input.now ?? new Date();
+    if (input.expectedDeliveryDate && input.expectedDeliveryDate < dateKey(received)) {
+      return { error: "Expected delivery date cannot be before the received date" };
+    }
+    const nowIso = received.toISOString();
+    const service: Service = {
+      id: crypto.randomUUID(),
+      serviceNumber: this.takeServiceNumber(received),
+      customerId: input.customerId,
+      serviceType: input.serviceType,
+      status: "pending",
+      itemId: input.itemId ?? null,
+      itemUnitId: input.itemUnitId ?? null,
+      isInHouseProduct: isInHouse,
+      productName,
+      productSerial: input.productSerial ?? "",
+      productModel: input.productModel ?? "",
+      problemDescription: input.problemDescription.trim(),
+      serviceNotes: input.serviceNotes ?? "",
+      technicianName: input.technicianName ?? "",
+      receivedDate: nowIso,
+      expectedDeliveryDate: input.expectedDeliveryDate ?? "",
+      actualDeliveryDate: null,
+      serviceCharge: input.serviceType === "non_paid" ? 0 : Math.max(0, input.serviceCharge ?? 0),
+      discount: Math.max(0, input.discount ?? 0),
+      vatTax: Math.max(0, input.vatTax ?? 0),
+      items: [],
+      payments: [],
+      statusHistory: [{
+        id: crypto.randomUUID(),
+        serviceId: "",
+        status: "pending",
+        notes: "Service received",
+        by: input.createdBy ?? "Demo user",
+        at: nowIso,
+      }],
+      tracking: { ...EMPTY_SERVICE_TRACKING, ...(input.tracking ?? {}), photoUrls: [...(input.tracking?.photoUrls ?? [])] },
+      vendorWarranty: null,
+      warrantyClaimId: input.warrantyClaimId ?? null,
+      createdBy: input.createdBy ?? "Demo user",
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+    service.statusHistory[0].serviceId = service.id;
+    this.services.push(service);
+    this.version++;
+    return service;
+  }
+
+  private writeService(idx: number, updates: Partial<Service>): Service {
+    this.services[idx] = { ...this.services[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.version++;
+    return this.services[idx];
+  }
+
+  updateService(id: string, updates: Partial<Pick<Service,
+    "serviceType" | "serviceCharge" | "discount" | "vatTax" | "problemDescription" | "serviceNotes" |
+    "technicianName" | "expectedDeliveryDate" | "productName" | "productSerial" | "productModel" | "tracking"
+  >>): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === id);
+    if (idx === -1) return { error: "Service not found" };
+    if (this.services[idx].status === "delivered") return { error: "Delivered services cannot be edited" };
+    const next = { ...updates };
+    const type = next.serviceType ?? this.services[idx].serviceType;
+    if (type === "non_paid") next.serviceCharge = 0;
+    return this.writeService(idx, next);
+  }
+
+  getServiceTotals(id: string): ServiceTotals | undefined {
+    const service = this.getServiceById(id);
+    return service ? serviceTotals(service) : undefined;
+  }
+
+  addServiceItem(serviceId: string, input: { name: string; quantity: number; unitPrice: number }): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    if (this.services[idx].status === "delivered") return { error: "Delivered services cannot be edited" };
+    if (!input.name.trim()) return { error: "Part name is required" };
+    if (!(input.quantity > 0)) return { error: "Quantity must be greater than zero" };
+    if (input.unitPrice < 0) return { error: "Unit price cannot be negative" };
+    const item: ServiceItem = {
+      id: crypto.randomUUID(),
+      serviceId,
+      name: input.name.trim(),
+      quantity: input.quantity,
+      unitPrice: input.unitPrice,
+      total: Math.round(input.quantity * input.unitPrice * 100) / 100,
+    };
+    return this.writeService(idx, { items: [...this.services[idx].items, item] });
+  }
+
+  removeServiceItem(serviceId: string, itemId: string): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    if (this.services[idx].status === "delivered") return { error: "Delivered services cannot be edited" };
+    return this.writeService(idx, { items: this.services[idx].items.filter((i) => i.id !== itemId) });
+  }
+
+  addServicePayment(serviceId: string, draft: PaymentDraft & {
+    receivedBy?: string;
+    branchName?: string;
+    accountNumber?: string;
+    proofUrl?: string;
+    notes?: string;
+  }): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    const totals = serviceTotals(this.services[idx]);
+    const error = validatePayment(draft, totals.dueAmount);
+    if (error) return { error };
+    const payment: ServicePayment = {
+      id: crypto.randomUUID(),
+      serviceId,
+      method: draft.method,
+      amount: Math.round(draft.amount * 100) / 100,
+      paidAt: new Date().toISOString(),
+      receivedBy: draft.receivedBy ?? "Demo user",
+      bankName: draft.bankName ?? "",
+      branchName: draft.branchName ?? "",
+      accountNumber: draft.accountNumber ?? "",
+      referenceNumber: draft.referenceNumber ?? "",
+      mobileNumber: draft.mobileNumber ?? "",
+      transactionId: draft.transactionId ?? "",
+      proofUrl: draft.proofUrl ?? "",
+      notes: draft.notes ?? "",
+    };
+    return this.writeService(idx, { payments: [...this.services[idx].payments, payment] });
+  }
+
+  /** FR-12/FR-14 + BR-06: enforce the transition graph and full payment before delivery. */
+  updateServiceStatus(serviceId: string, status: ServiceStatus, input?: { notes?: string; by?: string }): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    const service = this.services[idx];
+    if (service.status === "delivered") return { error: "Delivered services cannot change status" };
+    if (!canTransition(service.status, status)) {
+      return { error: `Cannot move from ${service.status} to ${status}` };
+    }
+    if (status === "delivered" && serviceTotals(service).dueAmount > 0) {
+      return { error: "Collect the full payment before delivering" };
+    }
+    const now = new Date().toISOString();
+    const event: ServiceStatusEvent = {
+      id: crypto.randomUUID(),
+      serviceId,
+      status,
+      notes: input?.notes ?? "",
+      by: input?.by ?? "Demo user",
+      at: now,
+    };
+    return this.writeService(idx, {
+      status,
+      statusHistory: [...service.statusHistory, event],
+      actualDeliveryDate: status === "delivered" ? now : service.actualDeliveryDate,
+      tracking: status === "delivered"
+        ? { ...service.tracking, deliveryDate: service.tracking.deliveryDate || now }
+        : service.tracking,
+    });
+  }
+
+  /** Record handover details, then move the service to Delivered. */
+  deliverService(serviceId: string, input: {
+    deliveryPerson: string;
+    receiverName: string;
+    deliveryDate?: string;
+    deliveryNotes?: string;
+    by?: string;
+  }): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    if (!input.receiverName.trim()) return { error: "Receiver name is required" };
+    const now = new Date().toISOString();
+    this.writeService(idx, {
+      tracking: {
+        ...this.services[idx].tracking,
+        deliveryPerson: input.deliveryPerson,
+        receiverName: input.receiverName,
+        deliveryDate: input.deliveryDate || now,
+        deliveryNotes: input.deliveryNotes ?? this.services[idx].tracking.deliveryNotes,
+      },
+    });
+    return this.updateServiceStatus(serviceId, "delivered", { notes: input.deliveryNotes, by: input.by });
+  }
+
+  /** FR-17/FR-18: send a warranty product to a vendor (an existing supplier). */
+  sendServiceToVendor(serviceId: string, input: {
+    vendorId: string;
+    expectedReturnDate?: string;
+    courierName?: string;
+    trackingNumber?: string;
+    notes?: string;
+  }): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    if (!this.getSupplierById(input.vendorId)) return { error: "Select a valid vendor" };
+    if (this.services[idx].status === "delivered") return { error: "Delivered services cannot be sent to a vendor" };
+    const now = new Date().toISOString();
+    return this.writeService(idx, {
+      vendorWarranty: {
+        vendorId: input.vendorId,
+        status: "sent",
+        sentDate: now,
+        expectedReturnDate: input.expectedReturnDate ?? "",
+        receivedDate: "",
+        courierName: input.courierName ?? "",
+        trackingNumber: input.trackingNumber ?? "",
+        qualityCheck: "pending",
+        notes: input.notes ?? "",
+      },
+    });
+  }
+
+  updateVendorWarranty(serviceId: string, updates: Partial<VendorWarrantyTracking>): Service | { error: string } {
+    const idx = this.services.findIndex((s) => s.id === serviceId);
+    if (idx === -1) return { error: "Service not found" };
+    const current = this.services[idx].vendorWarranty;
+    if (!current) return { error: "This service has not been sent to a vendor" };
+    const next: VendorWarrantyTracking = { ...current, ...updates };
+    if ((updates.status === "received" || updates.status === "replaced") && !next.receivedDate) {
+      next.receivedDate = new Date().toISOString();
+    }
+    return this.writeService(idx, { vendorWarranty: next });
   }
 }
