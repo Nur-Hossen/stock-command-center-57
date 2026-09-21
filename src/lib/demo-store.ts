@@ -184,6 +184,9 @@ export class DemoStore {
     this.challanCounterByYear = {};
     this.warrantyClaims = [];
     this.salesSettings = { ...DEFAULT_SALES_SETTINGS };
+    this.services = [];
+    this.serviceCounterByDay = {};
+    this.seedServices();
     this.version++;
   }
 
