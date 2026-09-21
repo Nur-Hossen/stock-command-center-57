@@ -200,3 +200,10 @@ export function useCreateSale() {
 export function useRefundSale() {
   return useDemoMutation<string>((store, id) => { throwOnError(store.refundSale(id)); });
 }
+
+// ─── Service mutations ──────────────────────────────────
+export function useCreateService() {
+  return useDemoMutation<Parameters<typeof import("@/lib/demo-store").DemoStore.prototype.createService>[0]>(
+    (store, data) => { throwOnError(store.createService(data)); },
+  );
+}
