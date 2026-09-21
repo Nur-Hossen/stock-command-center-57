@@ -128,3 +128,26 @@ export function useSales(): QueryResult<Sale[]> {
     return { data: [] as Sale[], isLoading: false, error: null };
   }, [isDemo, demoStore, version]);
 }
+
+export function useServices(filters?: {
+  status?: ServiceStatus;
+  customerId?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+}): QueryResult<Service[]> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getServices(filters), isLoading: false, error: null };
+    return { data: [] as Service[], isLoading: false, error: null };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo, demoStore, version, filters?.status, filters?.customerId, filters?.search, filters?.from, filters?.to]);
+}
+
+export function useServiceById(id: string): QueryResult<Service | undefined> {
+  const { isDemo, demoStore, version } = useDemo();
+  return useMemo(() => {
+    if (isDemo && demoStore) return { data: demoStore.getServiceById(id), isLoading: false, error: null };
+    return { data: undefined, isLoading: false, error: null };
+  }, [isDemo, demoStore, version, id]);
+}

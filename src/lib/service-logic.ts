@@ -1,10 +1,13 @@
 import type {
+  ProductCondition,
+  ReceivingMethod,
   Service,
   ServiceItem,
   ServicePayment,
   ServicePaymentMethod,
   ServicePaymentStatus,
   ServiceStatus,
+  ServiceType,
 } from "@/types/inventory";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -104,4 +107,25 @@ export const PAYMENT_METHOD_LABELS: Record<ServicePaymentMethod, string> = {
   cash: "Cash",
   bank: "Bank deposit",
   mfs: "Mobile financial service",
+};
+
+
+export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+  paid: "Paid service",
+  non_paid: "Non-paid (warranty)",
+};
+
+export const RECEIVING_METHOD_LABELS: Record<ReceivingMethod, string> = {
+  customer_brought: "Customer brought",
+  courier: "Courier",
+  pickup_service: "Pickup service",
+  third_party: "Third party",
+};
+
+export const PRODUCT_CONDITION_LABELS: Record<ProductCondition, string> = {
+  excellent: "Excellent",
+  good: "Good",
+  fair: "Fair",
+  poor: "Poor",
+  damaged: "Damaged",
 };
