@@ -1024,7 +1024,7 @@ export class DemoStore {
       problemDescription: "Device does not power on after a fall.",
       technicianName: "Rafiq",
       serviceCharge: 800,
-      tracking: { receivingMethod: "customer_brought", productCondition: "fair", conditionNotes: "Scratched casing" },
+      tracking: { receivingMethod: "customer_brought", condition: "fair" },
       now: daysAgo(1),
     });
     if (!("error" in pending)) {
@@ -1047,7 +1047,7 @@ export class DemoStore {
         courierName: "Sundarban",
         trackingNumber: "SRV-TRK-9001",
         courierCharge: 120,
-        productCondition: "good",
+        condition: "good",
       },
       now: daysAgo(4),
     });
@@ -1065,7 +1065,7 @@ export class DemoStore {
       productSerial: "OUT-7788",
       problemDescription: "Scanner head not reading codes.",
       technicianName: "Rafiq",
-      tracking: { receivingMethod: "pickup_service", pickupAddress: "Beacon Retail, Banani", productCondition: "good" },
+      tracking: { receivingMethod: "pickup_service", pickupAddress: "Beacon Retail, Banani", condition: "good" },
       now: daysAgo(9),
     });
     if (!("error" in delivered)) {
