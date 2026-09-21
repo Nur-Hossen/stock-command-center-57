@@ -184,6 +184,9 @@ export class DemoStore {
     this.challanCounterByYear = {};
     this.warrantyClaims = [];
     this.salesSettings = { ...DEFAULT_SALES_SETTINGS };
+    this.services = [];
+    this.serviceCounterByDay = {};
+    this.seedServices();
     this.version++;
   }
 
@@ -999,6 +1002,79 @@ export class DemoStore {
   }
 
   // ─── Services ──────────────────────────────────────────
+  /** Seed a small spread of demo services across the status workflow. */
+  private seedServices() {
+    const daysAgo = (n: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d;
+    };
+    const serialItem = this.data.items.find((i) => i.trackSerials) ?? this.data.items[0];
+    const unit = this.units.find((u) => u.itemId === serialItem?.id);
+
+    // 1. Pending, in-house product brought by the customer.
+    const pending = this.createService({
+      customerId: "cust-003",
+      serviceType: "paid",
+      itemId: serialItem?.id ?? null,
+      itemUnitId: unit?.id ?? null,
+      productName: serialItem?.name ?? "Customer device",
+      productSerial: unit?.serialNumber ?? "",
+      productModel: serialItem?.sku ?? "",
+      problemDescription: "Device does not power on after a fall.",
+      technicianName: "Rafiq",
+      serviceCharge: 800,
+      tracking: { receivingMethod: "customer_brought", condition: "fair" },
+      now: daysAgo(1),
+    });
+    if (!("error" in pending)) {
+      this.addServiceItem(pending.id, { name: "Charging port", quantity: 1, unitPrice: 450 });
+    }
+
+    // 2. Repairing, arrived by courier, part payment taken.
+    const repairing = this.createService({
+      customerId: "cust-001",
+      serviceType: "paid",
+      productName: "Bench power supply",
+      productSerial: "OUT-4421",
+      productModel: "PS-3005",
+      problemDescription: "Output voltage unstable under load.",
+      technicianName: "Sabbir",
+      serviceCharge: 1500,
+      vatTax: 100,
+      tracking: {
+        receivingMethod: "courier",
+        courierName: "Sundarban",
+        trackingNumber: "SRV-TRK-9001",
+        courierCharge: 120,
+        condition: "good",
+      },
+      now: daysAgo(4),
+    });
+    if (!("error" in repairing)) {
+      this.addServiceItem(repairing.id, { name: "Regulator board", quantity: 1, unitPrice: 2200 });
+      this.updateServiceStatus(repairing.id, "repairing", { notes: "Diagnosis complete, parts ordered" });
+      this.addServicePayment(repairing.id, { method: "cash", amount: 1000, receivedBy: "Front desk" });
+    }
+
+    // 3. Delivered, non-paid warranty service, fully closed.
+    const delivered = this.createService({
+      customerId: "cust-002",
+      serviceType: "non_paid",
+      productName: "Wireless barcode scanner",
+      productSerial: "OUT-7788",
+      problemDescription: "Scanner head not reading codes.",
+      technicianName: "Rafiq",
+      tracking: { receivingMethod: "pickup_service", pickupAddress: "Beacon Retail, Banani", condition: "good" },
+      now: daysAgo(9),
+    });
+    if (!("error" in delivered)) {
+      this.updateServiceStatus(delivered.id, "repairing", { notes: "Cleaning and recalibration" });
+      this.updateServiceStatus(delivered.id, "solved", { notes: "Scanner head replaced under warranty" });
+      this.deliverService(delivered.id, { deliveryPerson: "Hasan", receiverName: "Beacon Retail store manager" });
+    }
+  }
+
   getServices(filters?: {
     status?: ServiceStatus;
     customerId?: string;
