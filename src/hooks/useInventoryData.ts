@@ -12,6 +12,8 @@ import type {
   ItemUnit,
   Customer,
   Sale,
+  Service,
+  ServiceStatus,
 } from "@/types/inventory";
 import type { ItemFilters, StockSummary } from "@/lib/demo-store";
 
