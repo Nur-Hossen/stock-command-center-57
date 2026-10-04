@@ -26,6 +26,7 @@ export const Route = createFileRoute("/app/services")({
 });
 
 function ServicesPage() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<ServiceFilters>(EMPTY_SERVICE_FILTERS);
   const { data: services } = useServices({
     status: filters.status,
@@ -78,7 +79,7 @@ function ServicesPage() {
           title="No services found"
           description="No service jobs match the current filters. Create a new service job to get started."
           actionLabel="New service"
-          onAction={() => { window.location.href = "/app/services/new"; }}
+          onAction={() => navigate({ to: "/app/services/new" })}
           secondaryActionLabel="Clear filters"
           onSecondaryAction={() => setFilters(EMPTY_SERVICE_FILTERS)}
         />
