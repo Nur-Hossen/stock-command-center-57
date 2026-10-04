@@ -21,6 +21,8 @@ const ROUTE_PERMISSION: Record<string, PermissionAction | null> = {
   "/app/pos": "open_pos",
   "/app/warranty": "check_warranty",
   "/app/warranty/claims": "manage_warranty_claims",
+  "/app/services": null,
+  "/app/services/new": null,
   "/app/settings": "access_settings",
 };
 

@@ -15,6 +15,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppWarrantyRouteImport } from './routes/app.warranty'
 import { Route as AppSuppliersRouteImport } from './routes/app.suppliers'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppServicesRouteImport } from './routes/app.services'
 import { Route as AppSalesRouteImport } from './routes/app.sales'
 import { Route as AppRequestsRouteImport } from './routes/app.requests'
 import { Route as AppPurchaseOrdersRouteImport } from './routes/app.purchase-orders'
@@ -30,6 +31,7 @@ import { Route as AppAiInsightsRouteImport } from './routes/app.ai-insights'
 import { Route as AppWarrantyIndexRouteImport } from './routes/app.warranty.index'
 import { Route as AppSalesIndexRouteImport } from './routes/app.sales.index'
 import { Route as AppWarrantyClaimsRouteImport } from './routes/app.warranty.claims'
+import { Route as AppServicesNewRouteImport } from './routes/app.services.new'
 import { Route as AppSalesSaleIdRefundRouteImport } from './routes/app.sales.$saleId.refund'
 
 const AppRoute = AppRouteImport.update({
@@ -60,6 +62,11 @@ const AppSuppliersRoute = AppSuppliersRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppServicesRoute = AppServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSalesRoute = AppSalesRouteImport.update({
@@ -137,6 +144,11 @@ const AppWarrantyClaimsRoute = AppWarrantyClaimsRouteImport.update({
   path: '/claims',
   getParentRoute: () => AppWarrantyRoute,
 } as any)
+const AppServicesNewRoute = AppServicesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppServicesRoute,
+} as any)
 const AppSalesSaleIdRefundRoute = AppSalesSaleIdRefundRouteImport.update({
   id: '/$saleId/refund',
   path: '/$saleId/refund',
@@ -158,10 +170,12 @@ export interface FileRoutesByFullPath {
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
   '/app/sales': typeof AppSalesRouteWithChildren
+  '/app/services': typeof AppServicesRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales/': typeof AppSalesIndexRoute
   '/app/warranty/': typeof AppWarrantyIndexRoute
@@ -180,9 +194,11 @@ export interface FileRoutesByTo {
   '/app/pos': typeof AppPosRoute
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
+  '/app/services': typeof AppServicesRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app': typeof AppIndexRoute
+  '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales': typeof AppSalesIndexRoute
   '/app/warranty': typeof AppWarrantyIndexRoute
@@ -204,10 +220,12 @@ export interface FileRoutesById {
   '/app/purchase-orders': typeof AppPurchaseOrdersRoute
   '/app/requests': typeof AppRequestsRoute
   '/app/sales': typeof AppSalesRouteWithChildren
+  '/app/services': typeof AppServicesRouteWithChildren
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales/': typeof AppSalesIndexRoute
   '/app/warranty/': typeof AppWarrantyIndexRoute
@@ -230,10 +248,12 @@ export interface FileRouteTypes {
     | '/app/purchase-orders'
     | '/app/requests'
     | '/app/sales'
+    | '/app/services'
     | '/app/settings'
     | '/app/suppliers'
     | '/app/warranty'
     | '/app/'
+    | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales/'
     | '/app/warranty/'
@@ -252,9 +272,11 @@ export interface FileRouteTypes {
     | '/app/pos'
     | '/app/purchase-orders'
     | '/app/requests'
+    | '/app/services'
     | '/app/settings'
     | '/app/suppliers'
     | '/app'
+    | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales'
     | '/app/warranty'
@@ -275,10 +297,12 @@ export interface FileRouteTypes {
     | '/app/purchase-orders'
     | '/app/requests'
     | '/app/sales'
+    | '/app/services'
     | '/app/settings'
     | '/app/suppliers'
     | '/app/warranty'
     | '/app/'
+    | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales/'
     | '/app/warranty/'
@@ -332,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/services': {
+      id: '/app/services'
+      path: '/services'
+      fullPath: '/app/services'
+      preLoaderRoute: typeof AppServicesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/sales': {
@@ -439,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWarrantyClaimsRouteImport
       parentRoute: typeof AppWarrantyRoute
     }
+    '/app/services/new': {
+      id: '/app/services/new'
+      path: '/new'
+      fullPath: '/app/services/new'
+      preLoaderRoute: typeof AppServicesNewRouteImport
+      parentRoute: typeof AppServicesRoute
+    }
     '/app/sales/$saleId/refund': {
       id: '/app/sales/$saleId/refund'
       path: '/$saleId/refund'
@@ -461,6 +499,18 @@ const AppSalesRouteChildren: AppSalesRouteChildren = {
 
 const AppSalesRouteWithChildren = AppSalesRoute._addFileChildren(
   AppSalesRouteChildren,
+)
+
+interface AppServicesRouteChildren {
+  AppServicesNewRoute: typeof AppServicesNewRoute
+}
+
+const AppServicesRouteChildren: AppServicesRouteChildren = {
+  AppServicesNewRoute: AppServicesNewRoute,
+}
+
+const AppServicesRouteWithChildren = AppServicesRoute._addFileChildren(
+  AppServicesRouteChildren,
 )
 
 interface AppWarrantyRouteChildren {
@@ -490,6 +540,7 @@ interface AppRouteChildren {
   AppPurchaseOrdersRoute: typeof AppPurchaseOrdersRoute
   AppRequestsRoute: typeof AppRequestsRoute
   AppSalesRoute: typeof AppSalesRouteWithChildren
+  AppServicesRoute: typeof AppServicesRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppSuppliersRoute: typeof AppSuppliersRoute
   AppWarrantyRoute: typeof AppWarrantyRouteWithChildren
@@ -509,6 +560,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPurchaseOrdersRoute: AppPurchaseOrdersRoute,
   AppRequestsRoute: AppRequestsRoute,
   AppSalesRoute: AppSalesRouteWithChildren,
+  AppServicesRoute: AppServicesRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppSuppliersRoute: AppSuppliersRoute,
   AppWarrantyRoute: AppWarrantyRouteWithChildren,
