@@ -14,6 +14,8 @@ import {
   HelpCircle,
   Users as UsersIcon,
   Receipt,
+  Wrench,
+  PlusCircle,
 } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -64,6 +66,13 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Warranty check", href: "/app/warranty", icon: Receipt },
       { label: "Claims", href: "/app/warranty/claims", icon: Receipt },
+    ],
+  },
+  {
+    label: "Service",
+    items: [
+      { label: "All services", href: "/app/services", icon: Wrench },
+      { label: "New service", href: "/app/services/new", icon: PlusCircle },
     ],
   },
   {
