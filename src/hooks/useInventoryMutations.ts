@@ -202,8 +202,33 @@ export function useRefundSale() {
 }
 
 // ─── Service mutations ──────────────────────────────────
+type DemoStoreType = import("@/lib/demo-store").DemoStore;
+
 export function useCreateService() {
-  return useDemoMutation<Parameters<typeof import("@/lib/demo-store").DemoStore.prototype.createService>[0]>(
+  return useDemoMutation<Parameters<DemoStoreType["createService"]>[0]>(
     (store, data) => { throwOnError(store.createService(data)); },
   );
+}
+
+export function useUpdateService() {
+  return useDemoMutation<{ id: string; updates: Parameters<DemoStoreType["updateService"]>[1] }>(
+    (store, { id, updates }) => { throwOnError(store.updateService(id, updates)); },
+  );
+}
+
+export function useUpdateServiceStatus() {
+  return useDemoMutation<{ id: string; status: import("@/types/inventory").ServiceStatus; notes?: string; by?: string }>(
+    (store, { id, status, notes, by }) => { throwOnError(store.updateServiceStatus(id, status, { notes, by })); },
+  );
+}
+
+export function useDeliverService() {
+  return useDemoMutation<{
+    id: string;
+    deliveryPerson: string;
+    receiverName: string;
+    deliveryDate?: string;
+    deliveryNotes?: string;
+    by?: string;
+  }>((store, { id, ...input }) => { throwOnError(store.deliverService(id, input)); });
 }
