@@ -33,6 +33,7 @@ import { Route as AppServicesIndexRouteImport } from './routes/app.services.inde
 import { Route as AppSalesIndexRouteImport } from './routes/app.sales.index'
 import { Route as AppWarrantyClaimsRouteImport } from './routes/app.warranty.claims'
 import { Route as AppServicesNewRouteImport } from './routes/app.services.new'
+import { Route as AppServicesServiceIdRouteImport } from './routes/app.services.$serviceId'
 import { Route as AppSalesSaleIdRefundRouteImport } from './routes/app.sales.$saleId.refund'
 
 const AppRoute = AppRouteImport.update({
@@ -155,6 +156,11 @@ const AppServicesNewRoute = AppServicesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AppServicesRoute,
 } as any)
+const AppServicesServiceIdRoute = AppServicesServiceIdRouteImport.update({
+  id: '/$serviceId',
+  path: '/$serviceId',
+  getParentRoute: () => AppServicesRoute,
+} as any)
 const AppSalesSaleIdRefundRoute = AppSalesSaleIdRefundRouteImport.update({
   id: '/$saleId/refund',
   path: '/$saleId/refund',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/services/$serviceId': typeof AppServicesServiceIdRoute
   '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales/': typeof AppSalesIndexRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/suppliers': typeof AppSuppliersRoute
   '/app': typeof AppIndexRoute
+  '/app/services/$serviceId': typeof AppServicesServiceIdRoute
   '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales': typeof AppSalesIndexRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/app/suppliers': typeof AppSuppliersRoute
   '/app/warranty': typeof AppWarrantyRouteWithChildren
   '/app/': typeof AppIndexRoute
+  '/app/services/$serviceId': typeof AppServicesServiceIdRoute
   '/app/services/new': typeof AppServicesNewRoute
   '/app/warranty/claims': typeof AppWarrantyClaimsRoute
   '/app/sales/': typeof AppSalesIndexRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/app/suppliers'
     | '/app/warranty'
     | '/app/'
+    | '/app/services/$serviceId'
     | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales/'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/suppliers'
     | '/app'
+    | '/app/services/$serviceId'
     | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/app/suppliers'
     | '/app/warranty'
     | '/app/'
+    | '/app/services/$serviceId'
     | '/app/services/new'
     | '/app/warranty/claims'
     | '/app/sales/'
@@ -494,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppServicesNewRouteImport
       parentRoute: typeof AppServicesRoute
     }
+    '/app/services/$serviceId': {
+      id: '/app/services/$serviceId'
+      path: '/$serviceId'
+      fullPath: '/app/services/$serviceId'
+      preLoaderRoute: typeof AppServicesServiceIdRouteImport
+      parentRoute: typeof AppServicesRoute
+    }
     '/app/sales/$saleId/refund': {
       id: '/app/sales/$saleId/refund'
       path: '/$saleId/refund'
@@ -519,11 +538,13 @@ const AppSalesRouteWithChildren = AppSalesRoute._addFileChildren(
 )
 
 interface AppServicesRouteChildren {
+  AppServicesServiceIdRoute: typeof AppServicesServiceIdRoute
   AppServicesNewRoute: typeof AppServicesNewRoute
   AppServicesIndexRoute: typeof AppServicesIndexRoute
 }
 
 const AppServicesRouteChildren: AppServicesRouteChildren = {
+  AppServicesServiceIdRoute: AppServicesServiceIdRoute,
   AppServicesNewRoute: AppServicesNewRoute,
   AppServicesIndexRoute: AppServicesIndexRoute,
 }
