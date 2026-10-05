@@ -84,7 +84,11 @@ function ServicesPage() {
           onSecondaryAction={() => setFilters(EMPTY_SERVICE_FILTERS)}
         />
       ) : (
-        <ServicesTable services={services} customers={customers} />
+        <ServicesTable
+          services={services}
+          customers={customers}
+          onRowClick={(s) => navigate({ to: "/app/services/$serviceId", params: { serviceId: s.id } })}
+        />
       )}
     </div>
   );

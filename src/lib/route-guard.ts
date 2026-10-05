@@ -30,8 +30,17 @@ export function canAccessRoute(
   path: string,
   hasPermission: (p: PermissionAction) => boolean,
 ): boolean {
-  if (!(path in ROUTE_PERMISSION)) return hasPermission("access_settings");
-  const required = ROUTE_PERMISSION[path];
-  if (required === null) return true;
-  return hasPermission(required);
+  // Exact match first, then walk up segments so dynamic children
+  // (e.g. /app/services/<id>) inherit their parent route's permission.
+  let p: string = path;
+  while (p.length > 1) {
+    if (p in ROUTE_PERMISSION) {
+      const required = ROUTE_PERMISSION[p];
+      return required === null ? true : hasPermission(required);
+    }
+    const idx = p.lastIndexOf("/");
+    if (idx <= 0) break;
+    p = p.slice(0, idx);
+  }
+  return hasPermission("access_settings");
 }
