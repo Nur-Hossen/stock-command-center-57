@@ -232,3 +232,15 @@ export function useDeliverService() {
     by?: string;
   }>((store, { id, ...input }) => { throwOnError(store.deliverService(id, input)); });
 }
+
+export function useAddServiceItem() {
+  return useDemoMutation<{ serviceId: string; name: string; quantity: number; unitPrice: number }>(
+    (store, { serviceId, ...input }) => { throwOnError(store.addServiceItem(serviceId, input)); },
+  );
+}
+
+export function useRemoveServiceItem() {
+  return useDemoMutation<{ serviceId: string; itemId: string }>(
+    (store, { serviceId, itemId }) => { throwOnError(store.removeServiceItem(serviceId, itemId)); },
+  );
+}
