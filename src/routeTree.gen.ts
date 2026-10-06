@@ -9,41 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppWarrantyRouteImport } from './routes/app.warranty'
-import { Route as AppSuppliersRouteImport } from './routes/app.suppliers'
-import { Route as AppSettingsRouteImport } from './routes/app.settings'
-import { Route as AppServicesRouteImport } from './routes/app.services'
-import { Route as AppSalesRouteImport } from './routes/app.sales'
-import { Route as AppRequestsRouteImport } from './routes/app.requests'
-import { Route as AppPurchaseOrdersRouteImport } from './routes/app.purchase-orders'
-import { Route as AppPosRouteImport } from './routes/app.pos'
-import { Route as AppMovementsRouteImport } from './routes/app.movements'
-import { Route as AppLocationsRouteImport } from './routes/app.locations'
-import { Route as AppHelpRouteImport } from './routes/app.help'
-import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
-import { Route as AppCustomersRouteImport } from './routes/app.customers'
-import { Route as AppCatalogRouteImport } from './routes/app.catalog'
-import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiInsightsRouteImport } from './routes/app.ai-insights'
-import { Route as AppWarrantyIndexRouteImport } from './routes/app.warranty.index'
-import { Route as AppServicesIndexRouteImport } from './routes/app.services.index'
+import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as AppCatalogRouteImport } from './routes/app.catalog'
+import { Route as AppCustomersRouteImport } from './routes/app.customers'
+import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
+import { Route as AppHelpRouteImport } from './routes/app.help'
+import { Route as AppLocationsRouteImport } from './routes/app.locations'
+import { Route as AppMovementsRouteImport } from './routes/app.movements'
+import { Route as AppPosRouteImport } from './routes/app.pos'
+import { Route as AppPurchaseOrdersRouteImport } from './routes/app.purchase-orders'
+import { Route as AppRequestsRouteImport } from './routes/app.requests'
+import { Route as AppSalesRouteImport } from './routes/app.sales'
+import { Route as AppServicesRouteImport } from './routes/app.services'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppSuppliersRouteImport } from './routes/app.suppliers'
+import { Route as AppWarrantyRouteImport } from './routes/app.warranty'
 import { Route as AppSalesIndexRouteImport } from './routes/app.sales.index'
-import { Route as AppWarrantyClaimsRouteImport } from './routes/app.warranty.claims'
-import { Route as AppServicesNewRouteImport } from './routes/app.services.new'
+import { Route as AppServicesIndexRouteImport } from './routes/app.services.index'
 import { Route as AppServicesServiceIdRouteImport } from './routes/app.services.$serviceId'
+import { Route as AppServicesNewRouteImport } from './routes/app.services.new'
+import { Route as AppWarrantyIndexRouteImport } from './routes/app.warranty.index'
+import { Route as AppWarrantyClaimsRouteImport } from './routes/app.warranty.claims'
 import { Route as AppSalesSaleIdRefundRouteImport } from './routes/app.sales.$saleId.refund'
 
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -51,74 +51,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppWarrantyRoute = AppWarrantyRouteImport.update({
-  id: '/warranty',
-  path: '/warranty',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSuppliersRoute = AppSuppliersRouteImport.update({
-  id: '/suppliers',
-  path: '/suppliers',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppServicesRoute = AppServicesRouteImport.update({
-  id: '/services',
-  path: '/services',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSalesRoute = AppSalesRouteImport.update({
-  id: '/sales',
-  path: '/sales',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRequestsRoute = AppRequestsRouteImport.update({
-  id: '/requests',
-  path: '/requests',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPurchaseOrdersRoute = AppPurchaseOrdersRouteImport.update({
-  id: '/purchase-orders',
-  path: '/purchase-orders',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPosRoute = AppPosRouteImport.update({
-  id: '/pos',
-  path: '/pos',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMovementsRoute = AppMovementsRouteImport.update({
-  id: '/movements',
-  path: '/movements',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLocationsRoute = AppLocationsRouteImport.update({
-  id: '/locations',
-  path: '/locations',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHelpRoute = AppHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCustomersRoute = AppCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCatalogRoute = AppCatalogRouteImport.update({
-  id: '/catalog',
-  path: '/catalog',
+const AppAiInsightsRoute = AppAiInsightsRouteImport.update({
+  id: '/ai-insights',
+  path: '/ai-insights',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
@@ -126,40 +61,105 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAiInsightsRoute = AppAiInsightsRouteImport.update({
-  id: '/ai-insights',
-  path: '/ai-insights',
+const AppCatalogRoute = AppCatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
   getParentRoute: () => AppRoute,
 } as any)
-const AppWarrantyIndexRoute = AppWarrantyIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppWarrantyRoute,
+const AppCustomersRoute = AppCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AppRoute,
 } as any)
-const AppServicesIndexRoute = AppServicesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppServicesRoute,
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHelpRoute = AppHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLocationsRoute = AppLocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMovementsRoute = AppMovementsRouteImport.update({
+  id: '/movements',
+  path: '/movements',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPosRoute = AppPosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPurchaseOrdersRoute = AppPurchaseOrdersRouteImport.update({
+  id: '/purchase-orders',
+  path: '/purchase-orders',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsRoute = AppRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalesRoute = AppSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppServicesRoute = AppServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSuppliersRoute = AppSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWarrantyRoute = AppWarrantyRouteImport.update({
+  id: '/warranty',
+  path: '/warranty',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSalesIndexRoute = AppSalesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppSalesRoute,
 } as any)
-const AppWarrantyClaimsRoute = AppWarrantyClaimsRouteImport.update({
-  id: '/claims',
-  path: '/claims',
-  getParentRoute: () => AppWarrantyRoute,
-} as any)
-const AppServicesNewRoute = AppServicesNewRouteImport.update({
-  id: '/new',
-  path: '/new',
+const AppServicesIndexRoute = AppServicesIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => AppServicesRoute,
 } as any)
 const AppServicesServiceIdRoute = AppServicesServiceIdRouteImport.update({
   id: '/$serviceId',
   path: '/$serviceId',
   getParentRoute: () => AppServicesRoute,
+} as any)
+const AppServicesNewRoute = AppServicesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppServicesRoute,
+} as any)
+const AppWarrantyIndexRoute = AppWarrantyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppWarrantyRoute,
+} as any)
+const AppWarrantyClaimsRoute = AppWarrantyClaimsRouteImport.update({
+  id: '/claims',
+  path: '/claims',
+  getParentRoute: () => AppWarrantyRoute,
 } as any)
 const AppSalesSaleIdRefundRoute = AppSalesSaleIdRefundRouteImport.update({
   id: '/$saleId/refund',
@@ -338,18 +338,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -359,102 +359,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/warranty': {
-      id: '/app/warranty'
-      path: '/warranty'
-      fullPath: '/app/warranty'
-      preLoaderRoute: typeof AppWarrantyRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/suppliers': {
-      id: '/app/suppliers'
-      path: '/suppliers'
-      fullPath: '/app/suppliers'
-      preLoaderRoute: typeof AppSuppliersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/settings': {
-      id: '/app/settings'
-      path: '/settings'
-      fullPath: '/app/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/services': {
-      id: '/app/services'
-      path: '/services'
-      fullPath: '/app/services'
-      preLoaderRoute: typeof AppServicesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sales': {
-      id: '/app/sales'
-      path: '/sales'
-      fullPath: '/app/sales'
-      preLoaderRoute: typeof AppSalesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/requests': {
-      id: '/app/requests'
-      path: '/requests'
-      fullPath: '/app/requests'
-      preLoaderRoute: typeof AppRequestsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/purchase-orders': {
-      id: '/app/purchase-orders'
-      path: '/purchase-orders'
-      fullPath: '/app/purchase-orders'
-      preLoaderRoute: typeof AppPurchaseOrdersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/pos': {
-      id: '/app/pos'
-      path: '/pos'
-      fullPath: '/app/pos'
-      preLoaderRoute: typeof AppPosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/movements': {
-      id: '/app/movements'
-      path: '/movements'
-      fullPath: '/app/movements'
-      preLoaderRoute: typeof AppMovementsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/locations': {
-      id: '/app/locations'
-      path: '/locations'
-      fullPath: '/app/locations'
-      preLoaderRoute: typeof AppLocationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/help': {
-      id: '/app/help'
-      path: '/help'
-      fullPath: '/app/help'
-      preLoaderRoute: typeof AppHelpRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/dashboard': {
-      id: '/app/dashboard'
-      path: '/dashboard'
-      fullPath: '/app/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/customers': {
-      id: '/app/customers'
-      path: '/customers'
-      fullPath: '/app/customers'
-      preLoaderRoute: typeof AppCustomersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/catalog': {
-      id: '/app/catalog'
-      path: '/catalog'
-      fullPath: '/app/catalog'
-      preLoaderRoute: typeof AppCatalogRouteImport
+    '/app/ai-insights': {
+      id: '/app/ai-insights'
+      path: '/ai-insights'
+      fullPath: '/app/ai-insights'
+      preLoaderRoute: typeof AppAiInsightsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/analytics': {
@@ -464,26 +373,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/ai-insights': {
-      id: '/app/ai-insights'
-      path: '/ai-insights'
-      fullPath: '/app/ai-insights'
-      preLoaderRoute: typeof AppAiInsightsRouteImport
+    '/app/catalog': {
+      id: '/app/catalog'
+      path: '/catalog'
+      fullPath: '/app/catalog'
+      preLoaderRoute: typeof AppCatalogRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/warranty/': {
-      id: '/app/warranty/'
-      path: '/'
-      fullPath: '/app/warranty/'
-      preLoaderRoute: typeof AppWarrantyIndexRouteImport
-      parentRoute: typeof AppWarrantyRoute
+    '/app/customers': {
+      id: '/app/customers'
+      path: '/customers'
+      fullPath: '/app/customers'
+      preLoaderRoute: typeof AppCustomersRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/app/services/': {
-      id: '/app/services/'
-      path: '/'
-      fullPath: '/app/services/'
-      preLoaderRoute: typeof AppServicesIndexRouteImport
-      parentRoute: typeof AppServicesRoute
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/help': {
+      id: '/app/help'
+      path: '/help'
+      fullPath: '/app/help'
+      preLoaderRoute: typeof AppHelpRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/locations': {
+      id: '/app/locations'
+      path: '/locations'
+      fullPath: '/app/locations'
+      preLoaderRoute: typeof AppLocationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/movements': {
+      id: '/app/movements'
+      path: '/movements'
+      fullPath: '/app/movements'
+      preLoaderRoute: typeof AppMovementsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pos': {
+      id: '/app/pos'
+      path: '/pos'
+      fullPath: '/app/pos'
+      preLoaderRoute: typeof AppPosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/purchase-orders': {
+      id: '/app/purchase-orders'
+      path: '/purchase-orders'
+      fullPath: '/app/purchase-orders'
+      preLoaderRoute: typeof AppPurchaseOrdersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/requests': {
+      id: '/app/requests'
+      path: '/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AppRequestsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sales': {
+      id: '/app/sales'
+      path: '/sales'
+      fullPath: '/app/sales'
+      preLoaderRoute: typeof AppSalesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/services': {
+      id: '/app/services'
+      path: '/services'
+      fullPath: '/app/services'
+      preLoaderRoute: typeof AppServicesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/suppliers': {
+      id: '/app/suppliers'
+      path: '/suppliers'
+      fullPath: '/app/suppliers'
+      preLoaderRoute: typeof AppSuppliersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/warranty': {
+      id: '/app/warranty'
+      path: '/warranty'
+      fullPath: '/app/warranty'
+      preLoaderRoute: typeof AppWarrantyRouteImport
+      parentRoute: typeof AppRoute
     }
     '/app/sales/': {
       id: '/app/sales/'
@@ -492,18 +478,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSalesIndexRouteImport
       parentRoute: typeof AppSalesRoute
     }
-    '/app/warranty/claims': {
-      id: '/app/warranty/claims'
-      path: '/claims'
-      fullPath: '/app/warranty/claims'
-      preLoaderRoute: typeof AppWarrantyClaimsRouteImport
-      parentRoute: typeof AppWarrantyRoute
-    }
-    '/app/services/new': {
-      id: '/app/services/new'
-      path: '/new'
-      fullPath: '/app/services/new'
-      preLoaderRoute: typeof AppServicesNewRouteImport
+    '/app/services/': {
+      id: '/app/services/'
+      path: '/'
+      fullPath: '/app/services/'
+      preLoaderRoute: typeof AppServicesIndexRouteImport
       parentRoute: typeof AppServicesRoute
     }
     '/app/services/$serviceId': {
@@ -512,6 +491,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/services/$serviceId'
       preLoaderRoute: typeof AppServicesServiceIdRouteImport
       parentRoute: typeof AppServicesRoute
+    }
+    '/app/services/new': {
+      id: '/app/services/new'
+      path: '/new'
+      fullPath: '/app/services/new'
+      preLoaderRoute: typeof AppServicesNewRouteImport
+      parentRoute: typeof AppServicesRoute
+    }
+    '/app/warranty/': {
+      id: '/app/warranty/'
+      path: '/'
+      fullPath: '/app/warranty/'
+      preLoaderRoute: typeof AppWarrantyIndexRouteImport
+      parentRoute: typeof AppWarrantyRoute
+    }
+    '/app/warranty/claims': {
+      id: '/app/warranty/claims'
+      path: '/claims'
+      fullPath: '/app/warranty/claims'
+      preLoaderRoute: typeof AppWarrantyClaimsRouteImport
+      parentRoute: typeof AppWarrantyRoute
     }
     '/app/sales/$saleId/refund': {
       id: '/app/sales/$saleId/refund'
