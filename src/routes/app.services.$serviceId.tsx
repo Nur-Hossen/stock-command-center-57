@@ -1,6 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Wrench } from "lucide-react";
+import { ArrowLeft, Printer, Wrench } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ServiceBillingCard } from "@/components/services/ServiceBillingCard";
+import { ServiceInvoicePrint } from "@/components/services/ServiceInvoicePrint";
+import { useSalesSettings } from "@/hooks/usePosData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +49,8 @@ function ServiceDetailPage() {
   const { data: customers } = useCustomers();
   const updateService = useUpdateService();
   const [statusOpen, setStatusOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
+  const settings = useSalesSettings();
 
   if (!service) {
     return (
@@ -89,7 +95,10 @@ function ServiceDetailPage() {
             </div>
           </div>
         </div>
-        {canMove && <Button onClick={() => setStatusOpen(true)}>Update status</Button>}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setPrintOpen(true)}><Printer className="mr-2 h-4 w-4" />Print invoice</Button>
+          {canMove && <Button onClick={() => setStatusOpen(true)}>Update status</Button>}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -140,6 +149,8 @@ function ServiceDetailPage() {
             {t.deliveryNotes && <Row label="Delivery notes">{t.deliveryNotes}</Row>}
           </section>
 
+          <ServiceBillingCard service={service} />
+
           <section className="rounded-lg border border-border bg-card p-5">
             <h2 className="mb-2 text-sm font-semibold">Assignment</h2>
             <div className="flex items-center gap-3">
@@ -163,22 +174,6 @@ function ServiceDetailPage() {
             {customer?.address && <p className="text-sm text-muted-foreground">{customer.address}</p>}
           </section>
 
-          <section className="rounded-lg border border-border bg-card p-5">
-            <h2 className="mb-2 text-sm font-semibold">Charges</h2>
-            <Row label="Parts">${totals.partsCharge.toFixed(2)}</Row>
-            <Row label="Service charge">${totals.serviceCharge.toFixed(2)}</Row>
-            <Row label="Discount">-${totals.discount.toFixed(2)}</Row>
-            <Row label="VAT / tax">${totals.vatTax.toFixed(2)}</Row>
-            <div className="mt-1 border-t border-border pt-1.5">
-              <Row label="Net amount"><span className="font-mono font-medium">${totals.netAmount.toFixed(2)}</span></Row>
-              <Row label="Paid">${totals.totalPaid.toFixed(2)}</Row>
-              <Row label="Due">
-                <span className={totals.dueAmount > 0 ? "font-mono text-destructive" : "font-mono"}>
-                  ${totals.dueAmount.toFixed(2)}
-                </span>
-              </Row>
-            </div>
-          </section>
 
           <section className="rounded-lg border border-border bg-card p-5">
             <h2 className="mb-3 text-sm font-semibold">Status history</h2>
@@ -186,6 +181,14 @@ function ServiceDetailPage() {
           </section>
         </div>
       </div>
+
+      <Sheet open={printOpen} onOpenChange={setPrintOpen}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-[850px]">
+          <SheetTitle>Service invoice</SheetTitle>
+          <Button className="my-4 print:hidden" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print</Button>
+          <ServiceInvoicePrint service={service} customer={customer} businessName={settings.businessName} />
+        </SheetContent>
+      </Sheet>
 
       <StatusUpdateDialog service={service} open={statusOpen} onOpenChange={setStatusOpen} />
     </div>
