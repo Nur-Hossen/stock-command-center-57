@@ -244,3 +244,9 @@ export function useRemoveServiceItem() {
     (store, { serviceId, itemId }) => { throwOnError(store.removeServiceItem(serviceId, itemId)); },
   );
 }
+
+export function useAddServicePayment() {
+  return useDemoMutation<{ serviceId: string } & Parameters<DemoStoreType["addServicePayment"]>[1]>(
+    (store, { serviceId, ...draft }) => { throwOnError(store.addServicePayment(serviceId, draft)); },
+  );
+}
