@@ -41,8 +41,7 @@ export function RecordPaymentDialog({ service, dueAmount, open, onOpenChange }: 
     reader.readAsDataURL(file);
   };
 
-  const draft = { method, amount: Number(f.amount), ...f, amount_: undefined };
-  const error = validatePayment({ ...draft, amount: Number(f.amount) }, dueAmount);
+  const error = validatePayment({ ...f, method, amount: Number(f.amount) }, dueAmount);
 
   const submit = () => {
     if (error) { toast.error(error); return; }
