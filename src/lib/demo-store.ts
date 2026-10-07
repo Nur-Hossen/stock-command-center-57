@@ -1329,6 +1329,32 @@ export class DemoStore {
     return this.updateServiceStatus(serviceId, "delivered", { notes: input.deliveryNotes, by: input.by });
   }
 
+  /** Escalate a warranty claim into a non-paid service job (one service per claim). */
+  createServiceFromClaim(claimId: string): Service | { error: string } {
+    const claim = this.warrantyClaims.find((c) => c.id === claimId);
+    if (!claim) return { error: "Claim not found" };
+    if (claim.status === "resolved" || claim.status === "rejected") return { error: "Closed claims cannot be escalated" };
+    const existing = this.services.find((s) => s.warrantyClaimId === claimId);
+    if (existing) return { error: `Already linked to ${existing.serviceNumber}` };
+    const unit = this.getUnitById(claim.itemUnitId);
+    const item = unit ? this.getItemById(unit.itemId) : undefined;
+    const sale = claim.saleId ? this.getSaleById(claim.saleId) : undefined;
+    const result = this.createService({
+      customerId: sale?.customerId ?? "cust-003",
+      serviceType: "non_paid",
+      itemId: item?.id,
+      itemUnitId: unit?.id,
+      productName: item?.name ?? "Warranty product",
+      productSerial: unit?.serialNumber ?? "",
+      productModel: item?.sku ?? "",
+      problemDescription: claim.notes?.trim() || `Warranty ${claim.claimType} claim`,
+      warrantyClaimId: claimId,
+    });
+    if ("error" in result) return result;
+    if (claim.status === "pending") this.updateWarrantyClaim(claimId, "in_progress");
+    return result;
+  }
+
   /** FR-17/FR-18: send a warranty product to a vendor (an existing supplier). */
   sendServiceToVendor(serviceId: string, input: {
     vendorId: string;
@@ -1362,7 +1388,17 @@ export class DemoStore {
     if (idx === -1) return { error: "Service not found" };
     const current = this.services[idx].vendorWarranty;
     if (!current) return { error: "This service has not been sent to a vendor" };
+    if (this.services[idx].status === "delivered") return { error: "Delivered services cannot be edited" };
+    if (updates.status && updates.status !== current.status && !VENDOR_TRANSITIONS[current.status].includes(updates.status)) {
+      return { error: `Cannot move vendor status from ${current.status} to ${updates.status}` };
+    }
     const next: VendorWarrantyTracking = { ...current, ...updates };
+    if (updates.qualityCheck && updates.qualityCheck !== "pending" && !["received", "replaced"].includes(next.status)) {
+      return { error: "Quality check can only be done after the product is received from the vendor" };
+    }
+    if (updates.status === "replaced" && next.qualityCheck !== "passed") {
+      return { error: "The replacement must pass quality check before it is marked replaced" };
+    }
     if ((updates.status === "received" || updates.status === "replaced") && !next.receivedDate) {
       next.receivedDate = new Date().toISOString();
     }

@@ -129,3 +129,28 @@ export const PRODUCT_CONDITION_LABELS: Record<ProductCondition, string> = {
   poor: "Poor",
   damaged: "Damaged",
 };
+
+/** FR-17/FR-18 vendor warranty workflow. */
+export const VENDOR_TRANSITIONS: Record<import("@/types/inventory").VendorWarrantyStatus, import("@/types/inventory").VendorWarrantyStatus[]> = {
+  pending_review: ["sent", "rejected"],
+  sent: ["processing", "rejected"],
+  processing: ["received", "rejected"],
+  received: ["replaced"],
+  rejected: [],
+  replaced: [],
+};
+
+export const VENDOR_STATUS_LABELS: Record<import("@/types/inventory").VendorWarrantyStatus, string> = {
+  pending_review: "Pending review",
+  sent: "Sent to vendor",
+  processing: "Vendor processing",
+  received: "Received from vendor",
+  rejected: "Rejected",
+  replaced: "Replaced",
+};
+
+export const QUALITY_CHECK_LABELS: Record<import("@/types/inventory").QualityCheckStatus, string> = {
+  pending: "Pending",
+  passed: "Passed",
+  failed: "Failed",
+};
