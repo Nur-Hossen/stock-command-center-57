@@ -1316,13 +1316,27 @@ export class DemoStore {
   }): Service | { error: string } {
     const idx = this.services.findIndex((s) => s.id === serviceId);
     if (idx === -1) return { error: "Service not found" };
+    const svc = this.services[idx];
+    if (!input.deliveryPerson.trim()) return { error: "Delivery person is required" };
     if (!input.receiverName.trim()) return { error: "Receiver name is required" };
+    if (svc.status === "delivered") return { error: "Delivered services cannot change status" };
+    if (!canTransition(svc.status, "delivered")) {
+      return { error: "Only solved or damaged services can be delivered" };
+    }
+    if (serviceTotals(svc).dueAmount > 0) return { error: "Collect the full payment before delivering" };
+    const vw = svc.vendorWarranty;
+    if (vw && !["replaced", "rejected"].includes(vw.status)) {
+      return { error: "The product is still with the vendor — finish the vendor warranty first" };
+    }
+    if (input.deliveryDate && input.deliveryDate.slice(0, 10) < svc.receivedDate.slice(0, 10)) {
+      return { error: "Delivery date cannot be before the received date" };
+    }
     const now = new Date().toISOString();
     this.writeService(idx, {
       tracking: {
         ...this.services[idx].tracking,
-        deliveryPerson: input.deliveryPerson,
-        receiverName: input.receiverName,
+        deliveryPerson: input.deliveryPerson.trim(),
+        receiverName: input.receiverName.trim(),
         deliveryDate: input.deliveryDate || now,
         deliveryNotes: input.deliveryNotes ?? this.services[idx].tracking.deliveryNotes,
       },

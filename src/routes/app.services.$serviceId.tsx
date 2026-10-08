@@ -146,10 +146,18 @@ function ServiceDetailPage() {
             {t.receiptNumber && <Row label="Receipt #">{t.receiptNumber}</Row>}
             {t.pickupAddress && <Row label="Pickup address">{t.pickupAddress}</Row>}
             {t.pickupPerson && <Row label="Pickup person">{t.pickupPerson}{t.pickupPhone ? ` · ${t.pickupPhone}` : ""}</Row>}
-            {t.deliveryPerson && <Row label="Delivery person">{t.deliveryPerson}</Row>}
-            {t.receiverName && <Row label="Received by">{t.receiverName}</Row>}
-            {t.deliveryNotes && <Row label="Delivery notes">{t.deliveryNotes}</Row>}
           </section>
+
+          {service.status === "delivered" && (
+            <section className="rounded-lg border border-border bg-card p-5">
+              <h2 className="mb-2 text-sm font-semibold">Delivery &amp; handover</h2>
+              {t.deliveryDate && <Row label="Delivery date">{new Date(t.deliveryDate).toLocaleDateString()}</Row>}
+              {t.deliveryPerson && <Row label="Delivered by">{t.deliveryPerson}</Row>}
+              {t.receiverName && <Row label="Received by">{t.receiverName}</Row>}
+              {t.deliveryNotes && <Row label="Notes">{t.deliveryNotes}</Row>}
+              <p className="mt-2 text-xs text-muted-foreground">This service is delivered and locked.</p>
+            </section>
+          )}
 
           <ServiceBillingCard service={service} />
           <ServicePaymentsCard service={service} />
@@ -164,6 +172,7 @@ function ServiceDetailPage() {
                 defaultValue={service.technicianName}
                 onBlur={(e) => saveTechnician(e.target.value)}
                 placeholder="Assign a technician"
+                disabled={!canMove}
                 className="max-w-xs"
               />
             </div>
