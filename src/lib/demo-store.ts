@@ -32,6 +32,7 @@ import type {
 import { refundAmount } from "./refund-amount";
 import {
   canTransition,
+  VENDOR_TRANSITIONS,
   dateKey,
   formatServiceNumber,
   serviceTotals,
