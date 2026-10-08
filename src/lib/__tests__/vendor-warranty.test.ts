@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DemoStore } from "@/lib/demo-store";
+import { ItemStatus } from "@/types/inventory";
 
 function setup() {
   const store = new DemoStore();
@@ -37,17 +38,37 @@ describe("vendor warranty workflow", () => {
 });
 
 describe("claim escalation", () => {
-  it("creates one non-paid service per open claim", () => {
+  it("creates one non-paid service per open claim, linked to the buyer", () => {
     const store = new DemoStore();
-    const unit = store.getUnits().find((u) => u.status === "sold");
-    if (!unit) return;
+    const now = new Date().toISOString();
+    const item = store.createItem({
+      id: crypto.randomUUID(), sku: "SKU-ESC1", barcode: null, name: "Test Phone", description: "",
+      categoryId: null, brandId: null, model: "", modelYear: null, status: ItemStatus.Active, unit: "ea",
+      currentStock: 0, reorderPoint: 5, reorderQuantity: 10, costPrice: 50, sellingPrice: 100,
+      locationId: null, supplierId: null, imageUrl: null, trackSerials: true, defaultWarrantyMonths: 12,
+      customFields: {}, createdAt: now, updatedAt: now,
+    });
+    const unit = store.addUnit({
+      itemId: item.id, serialNumber: "SN-ESC-1", status: "in_stock", locationId: null, receivedAt: now,
+      soldAt: null, warrantyMonths: 12, warrantyExpiresAt: null, cost: 50, notes: "",
+    });
+    if ("error" in unit) throw new Error(unit.error);
+    const customer = store.getCustomers().find((c) => c.type === "retail")!;
+    const sale = store.createPosSale({
+      channel: "retail", customerId: customer.id, soldBy: "u",
+      lineItems: [{ itemUnitId: unit.id, unitPrice: 100 }], amountPaid: 100,
+    } as never);
+    if ("error" in sale) throw new Error(sale.error);
     const claim = store.createWarrantyClaim({ itemUnitId: unit.id, claimType: "service", notes: "Dead screen" } as never);
-    if ("error" in claim) return;
+    if ("error" in claim) throw new Error(claim.error);
+
     const svc = store.createServiceFromClaim(claim.id);
     if ("error" in svc) throw new Error(svc.error);
     expect(svc.serviceType).toBe("non_paid");
     expect(svc.warrantyClaimId).toBe(claim.id);
-    expect(svc.productSerial).toBe(unit.serialNumber);
+    expect(svc.customerId).toBe(customer.id);
+    expect(svc.productSerial).toBe("SN-ESC-1");
+    expect(svc.problemDescription).toBe("Dead screen");
     expect(store.createServiceFromClaim(claim.id)).toHaveProperty("error");
   });
 });
