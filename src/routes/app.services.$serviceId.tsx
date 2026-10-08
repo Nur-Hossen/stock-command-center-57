@@ -4,6 +4,7 @@ import { ArrowLeft, Printer, Wrench } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ServiceBillingCard } from "@/components/services/ServiceBillingCard";
 import { ServicePaymentsCard } from "@/components/services/ServicePaymentsCard";
+import { VendorWarrantyCard } from "@/components/services/VendorWarrantyCard";
 import { ServiceInvoicePrint } from "@/components/services/ServiceInvoicePrint";
 import { useSalesSettings } from "@/hooks/usePosData";
 import { Badge } from "@/components/ui/badge";
@@ -152,6 +153,7 @@ function ServiceDetailPage() {
 
           <ServiceBillingCard service={service} />
           <ServicePaymentsCard service={service} />
+          <VendorWarrantyCard service={service} />
 
           <section className="rounded-lg border border-border bg-card p-5">
             <h2 className="mb-2 text-sm font-semibold">Assignment</h2>

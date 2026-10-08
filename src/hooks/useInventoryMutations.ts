@@ -250,3 +250,15 @@ export function useAddServicePayment() {
     (store, { serviceId, ...draft }) => { throwOnError(store.addServicePayment(serviceId, draft)); },
   );
 }
+
+export function useSendToVendor() {
+  return useDemoMutation<{ serviceId: string } & Parameters<DemoStoreType["sendServiceToVendor"]>[1]>(
+    (store, { serviceId, ...input }) => { throwOnError(store.sendServiceToVendor(serviceId, input)); },
+  );
+}
+
+export function useUpdateVendorWarranty() {
+  return useDemoMutation<{ serviceId: string; updates: Partial<import("@/types/inventory").VendorWarrantyTracking> }>(
+    (store, { serviceId, updates }) => { throwOnError(store.updateVendorWarranty(serviceId, updates)); },
+  );
+}

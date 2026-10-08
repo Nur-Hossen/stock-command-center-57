@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
+import { ClaimServiceButton } from "@/components/services/ClaimServiceButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -77,7 +78,8 @@ function ClaimsPage() {
                     <DeliverySummary value={c.delivery} />
                     {c.notes && <div className="mt-1 text-xs">{c.notes}</div>}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <ClaimServiceButton claimId={c.id} open={c.status === "pending" || c.status === "in_progress"} />
                     {NEXT[c.status].map((next) => (
                       <Button key={next} size="sm" variant="outline"
                         onClick={() => {
