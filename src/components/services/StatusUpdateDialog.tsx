@@ -10,6 +10,7 @@ import { useDeliverService, useUpdateServiceStatus } from "@/hooks/useInventoryM
 import { SERVICE_STATUS_LABELS, SERVICE_TRANSITIONS, serviceTotals } from "@/lib/service-logic";
 import type { Service, ServiceStatus } from "@/types/inventory";
 import { cn } from "@/lib/utils";
+import { ConfirmAction } from "@/components/shared/ConfirmAction";
 
 interface StatusUpdateDialogProps {
   service: Service;
@@ -26,6 +27,8 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
   const [notes, setNotes] = useState("");
   const [deliveryPerson, setDeliveryPerson] = useState("");
   const [receiverName, setReceiverName] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -33,6 +36,8 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
       setNotes("");
       setDeliveryPerson("");
       setReceiverName("");
+      setDeliveryDate(new Date().toISOString().slice(0, 10));
+      setConfirmOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, service.id, service.status]);
@@ -40,6 +45,8 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
   const totals = serviceTotals(service);
   const isDelivery = target === "delivered";
   const blockedByDue = isDelivery && totals.dueAmount > 0;
+  const vw = service.vendorWarranty;
+  const blockedByVendor = isDelivery && !!vw && !["replaced", "rejected"].includes(vw.status);
   const busy = updateStatus.isLoading || deliver.isLoading;
 
   const confirm = () => {
@@ -49,18 +56,7 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
         toast.error("Delivery person and receiver name are required");
         return;
       }
-      deliver.mutate(
-        {
-          id: service.id,
-          deliveryPerson: deliveryPerson.trim(),
-          receiverName: receiverName.trim(),
-          deliveryNotes: notes.trim() || undefined,
-        },
-        {
-          onSuccess: () => { toast.success("Service marked as delivered"); onOpenChange(false); },
-          onError: (e) => toast.error(e.message),
-        },
-      );
+      setConfirmOpen(true);
       return;
     }
     updateStatus.mutate(
@@ -73,6 +69,22 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
         onError: (e) => toast.error(e.message),
       },
     );
+  };
+
+  const doDeliver = () => {
+      deliver.mutate(
+        {
+          id: service.id,
+          deliveryPerson: deliveryPerson.trim(),
+          receiverName: receiverName.trim(),
+          deliveryNotes: notes.trim() || undefined,
+          deliveryDate: deliveryDate ? new Date(deliveryDate + "T12:00:00").toISOString() : undefined,
+        },
+        {
+          onSuccess: () => { toast.success("Service marked as delivered"); onOpenChange(false); },
+          onError: (e) => toast.error(e.message),
+        },
+      );
   };
 
   return (
@@ -113,13 +125,23 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
                     ${totals.dueAmount.toFixed(2)} is still due — collect the full payment before delivering.
                   </p>
                 )}
+                {blockedByVendor && (
+                  <p className="text-sm text-destructive">
+                    The product is still with the vendor — finish the vendor warranty first.
+                  </p>
+                )}
+                <div>
+                  <label className="text-sm font-medium" htmlFor="del-date">Delivery date *</label>
+                  <Input id="del-date" type="date" value={deliveryDate} min={service.receivedDate.slice(0, 10)}
+                    onChange={(e) => setDeliveryDate(e.target.value)} />
+                </div>
                 <div>
                   <label className="text-sm font-medium">Delivery person *</label>
-                  <Input value={deliveryPerson} onChange={(e) => setDeliveryPerson(e.target.value)} />
+                  <Input aria-label="Delivery person" value={deliveryPerson} onChange={(e) => setDeliveryPerson(e.target.value)} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Receiver name *</label>
-                  <Input value={receiverName} onChange={(e) => setReceiverName(e.target.value)} />
+                  <Input aria-label="Receiver name" value={receiverName} onChange={(e) => setReceiverName(e.target.value)} />
                 </div>
               </div>
             )}
@@ -130,13 +152,20 @@ export function StatusUpdateDialog({ service, open, onOpenChange }: StatusUpdate
             </div>
 
             <div className="flex gap-3">
-              <Button className="flex-1" onClick={confirm} disabled={busy || blockedByDue || !target}>
+              <Button className="flex-1" onClick={confirm} disabled={busy || blockedByDue || blockedByVendor || !target || (isDelivery && !deliveryDate)}>
                 {busy ? "Saving…" : "Confirm"}
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
             </div>
           </div>
         )}
+        <ConfirmAction
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Confirm delivery"
+          description={`Hand over ${service.productName} (${service.serviceNumber}).\nDelivered by: ${deliveryPerson}\nReceived by: ${receiverName}\nDate: ${deliveryDate}\n\nOnce delivered, this service is locked and can no longer be edited.`}
+          onConfirm={doDeliver}
+        />
       </DialogContent>
     </Dialog>
   );
